@@ -52,3 +52,8 @@ This returns an iterator of rows, where each row is a dict `{<column_name>: <val
     {'document_id': 'doc-1', 'row_id': 2, 'row_name': 'row-2'}
 ]
 ```
+
+## Related Projects
+
+- [jsontable](https://pypi.org/project/jsontable/) has the same purpose but is not maintained.
+- [jsonpath-ng](https://github.com/bridgecrewio/jsonpath-ng) and other jsonpath implementation are much more flexible but more cumbersome to extract nested tables.

@@ -12,9 +12,12 @@ from json_tabulator.parser import parse_expression, InvalidExpression
 ])
 def test_accepts(s, expected):
     """
-    - Paths may contain array wildcards, array indices, or strings different from array markers. TODO
+    - Paths may contain array wildcards or string keys.
+    - A root prefix '$' is optional
     """
     assert parse_expression(s) == expected
+    prefixed = '$.' + s if s else '$' + s
+    assert parse_expression(prefixed) == expected
 
 
 @pytest.mark.parametrize('s', [

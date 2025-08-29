@@ -10,6 +10,7 @@ class State(Enum):
     end_segment = 2
     double_quotes = 3
     single_quotes = 4
+    start_expression = 5
 
 
 class InvalidExpression(ValueError):
@@ -24,44 +25,54 @@ def parse_expression(s: str) -> Expression:
     return Expression(_parse(s))
 
 
+def _parse_segment(s, start, stop):
+    if start is None:
+        return None
+    text = s[start:stop]
+    if text == '*':
+        return Star()
+    else:
+        return Key(text)
+
+
 def _parse(s: str):
-    state = State.start_segment
+    state = State.start_expression
     i_token = 0
     for i, c in enumerate(it.chain(s, [None])):
-        if c in ('.', None):
-            if state in (State.within_segment, State.end_segment):
-                if i_token is not None:
-                    text = s[i_token:i]
-                    if text == '*':
-                        yield Star()
-                    else:
-                        yield Key(text)
-                i_token = i + 1
-                state = State.start_segment
-            elif i == 0 and state == State.start_segment:
-                pass
-            else:
-                error(s, i)
-        elif c == '*':
-            if state == State.start_segment:
+        if state == State.start_expression and c in ('$', None):
+            if c == '$' and i == 0:
                 state = State.end_segment
-            elif state in (State.double_quotes, State.single_quotes):
+                i_token = None
+        elif state in (State.start_segment, State.start_expression):
+            if c in ['"', "'"]:
+                state = State.double_quotes if c == '"' else State.single_quotes
+                i_token = i + 1
+            elif c in ['.', None]:
+                error(s, i)
+            else:
+                state = State.within_segment
+                i_token = i
+        elif state == State.within_segment:
+            if c in ['.', None]:
+                segment = _parse_segment(s, i_token, i)
+                if segment:
+                    yield segment
+                state = State.start_segment
+                i_token = i + 1
+            else:
                 pass
+        elif state == State.end_segment:
+            if c in ['.', None]:
+                segment = _parse_segment(s, i_token, i)
+                if segment:
+                    yield segment
+                state = State.start_segment
+                i_token = i + 1
             else:
                 error(s, i)
-        elif c in ['"', "'"]:
-            quote_state = State.double_quotes if c == '"' else State.single_quotes
-            if state == State.start_segment:
-                i_token = i + 1
-                state = quote_state
-            elif state == quote_state:
+        elif state in [State.double_quotes, State.single_quotes]:
+            quote = {State.double_quotes: '"', State.single_quotes: "'"}[state]
+            if c == quote:
                 yield Key(s[i_token:i])
                 i_token = None
                 state = State.end_segment
-        else:
-            if state in (State.start_segment, State.within_segment):
-                state = State.within_segment
-            elif state in (State.double_quotes, State.single_quotes):
-                pass
-            else:
-                error(s, i)
