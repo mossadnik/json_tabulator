@@ -1,5 +1,5 @@
 import pytest
-from json_tabulator.expression import Expression, Star, Key, Index
+from json_tabulator.expression import expression, Star, Key, Index
 
 
 @pytest.mark.parametrize('path,expected', [
@@ -16,7 +16,7 @@ def test_is_valid(path: tuple, expected: bool):
     - A valid path may contain keys, non-negative array indices or the wildcard '*'.
     - A valid path must not use both array indices and the wildcard.
     """
-    path = Expression(path)
+    path = expression(path)
     assert path.is_valid() == expected
 
 
@@ -30,7 +30,7 @@ def test_is_generic(path: tuple, expected: bool):
     """
     - A path is generic if it does not contain array indices.
     """
-    path = Expression(path)
+    path = expression(path)
     assert path.is_generic() == expected
 
 
@@ -44,7 +44,7 @@ def test_is_concrete(path: tuple, expected: bool):
     """
     - A path is concrete if it does not contain the wildcard Star().
     """
-    path = Expression(path)
+    path = expression(path)
     assert path.is_concrete() == expected
 
 
@@ -61,7 +61,7 @@ def test_coincides_with(this: tuple, other: tuple, expected: bool):
     - Two paths coincide if one is a prefix of the other.
     - Coincidence is symmetric
     """
-    this, other = Expression(this), Expression(other)
+    this, other = expression(this), expression(other)
     assert this.coincides_with(other) == expected
     assert other.coincides_with(this) == expected
 
@@ -76,7 +76,7 @@ def test_get_attribute(path: tuple, expected: tuple):
     - get_attribute replaces all array indices with Star(), returning a generic path
     - This path can be used to select the path as an attribute in a table
     """
-    path, expected = Expression(path), Expression(expected)
+    path, expected = expression(path), expression(expected)
     actual = path.get_attribute()
     assert actual == expected
     assert actual.is_generic()
@@ -92,7 +92,7 @@ def test_get_table(path: tuple, expected: tuple):
     - get_table returns the generic path up to the last Star() element.
     - This path corresponds to a sub-table in the JSON document.
     """
-    path, expected = Expression(path), Expression(expected)
+    path, expected = expression(path), expression(expected)
     actual = path.get_table()
     assert actual == expected
     assert actual.is_generic()
@@ -108,7 +108,7 @@ def test_get_row(path: tuple, expected: tuple):
     - get_row returns the concrete path up the last array index.
     - This path is a unique row identifier across all extracted tables from a JSON document.
     """
-    path, expected = Expression(path), Expression(expected)
+    path, expected = expression(path), expression(expected)
     actual = path.get_row()
     assert actual == expected
     assert actual.is_concrete()
@@ -116,7 +116,7 @@ def test_get_row(path: tuple, expected: tuple):
 
 def test_get_row_raises_if_path_not_concrete():
     """Rows can only be computed from concrete paths."""
-    path = Expression((Key('a'), Star()))
+    path = expression(Key('a'), Star())
     with pytest.raises(ValueError):
         path.get_row()
 
@@ -124,3 +124,18 @@ def test_get_row_raises_if_path_not_concrete():
 @pytest.mark.parametrize('obj', [Key('a'), Index(1), Star])
 def test_Segments_are_hashable(obj):
     hash(obj)  # does not raise
+
+
+@pytest.mark.parametrize('path, expected', [
+    [(), '$'],
+    [(Key('a'), Star()), '$.a.*'],
+    [Key('*'), '$."*"'],
+    [(Key('a'), Key('*')), '$.a."*"'],
+    [Key('123'), '$."123"'],
+    [Key('.'), '$."."'],
+    [Key('a.b.c'), '$."a.b.c"'],
+    [Index(1), '$.1'],
+])
+def test_expression_path_string(path, expected):
+    actual = expression(path).to_string()
+    assert actual == expected

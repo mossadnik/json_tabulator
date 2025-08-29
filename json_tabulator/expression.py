@@ -6,7 +6,6 @@ import itertools as it
 class Segment:
     pass
 
-
 @dataclass(frozen=True)
 class Key(Segment):
     value: str
@@ -29,20 +28,23 @@ def is_wildcard(segment: Segment):
 
 class Expression(tuple):
     def __repr__(self):
-        return f'Expression({str(self)})'
+        return f'Expression({self.to_string()})'
 
-    def __str__(self):
+    def to_string(self):
         def render_element(seg):
             if isinstance(seg, Star):
                 return '*'
             elif isinstance(seg, Key):
-                return seg.value
+                return quote(seg.value)
             elif isinstance(seg, Index):
                 return str(seg.value)
             else:
                 raise ValueError(f'Not a path segment: {seg}')
 
-        return '.'.join(map(render_element, self))
+        return '.'.join(it.chain(['$'], map(render_element, self)))
+
+    def __str__(self):
+        return self.to_string()
 
     def _iter_generic(self):
         return (seg if isinstance(seg, Key) else Star() for seg in self)
@@ -87,3 +89,20 @@ class Expression(tuple):
 
     def __add__(self, other):
         return Expression(super().__add__(other))
+
+
+def expression(*args) -> Expression:
+    if len(args) == 1 and isinstance(args[0], (tuple, list)):
+        return Expression(args[0])
+    return Expression(args)
+
+
+def quote(s: str) -> str:
+    require_quote = (
+        s.isdigit()
+        or s == '*'
+        or '.' in s
+    )
+    if require_quote:
+        return f'"{s}"'
+    return s
