@@ -3,18 +3,12 @@
 from json_tabulator import query
 
 
-def test_dict_query():
+def test_readme_example_query():
     data = {
         'id': 'doc-1',
         'table': [
-            {
-                'id': 1,
-                'name': 'row-1'
-            },
-            {
-                'id': 2,
-                'name': 'row-2'
-            }
+            {'id': 1, 'name': 'row-1'},
+            {'id': 2, 'name': 'row-2'}
         ]
     }
 
@@ -32,3 +26,10 @@ def test_dict_query():
     ]
 
     assert list(rows) == expected
+
+
+def test_query_array():
+    data = [{'a': 1}]
+    q = query({'x': '$.*.a'})
+    actual = list(q.execute(data))
+    assert actual == [{'x': 1}]
