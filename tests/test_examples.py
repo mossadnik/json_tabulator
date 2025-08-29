@@ -1,6 +1,6 @@
 """Test documentation examples."""
 
-from json_tables import query
+from json_tabulator import query
 
 
 def test_dict_query():

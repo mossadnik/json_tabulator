@@ -1,6 +1,6 @@
 import pytest
-from json_tables.expression import Key, Star
-from json_tables.parser import parse_expression, InvalidExpression
+from json_tabulator.expression import Key, Star
+from json_tabulator.parser import parse_expression, InvalidExpression
 
 
 @pytest.mark.parametrize('s, expected', [

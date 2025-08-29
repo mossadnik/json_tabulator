@@ -1,7 +1,7 @@
 import pytest
 from typing import Generator
-from json_tables.query import QueryPlan
-from json_tables.expression import Expression, Star, Key
+from json_tabulator.query import QueryPlan
+from json_tabulator.expression import Expression, Star, Key
 
 
 def test_raises_for_invalid_queries():

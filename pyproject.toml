@@ -10,7 +10,7 @@ classifiers = [
 ]
 
 [tool.poetry.urls]
-homepage = "https://github.com/mossadnik/json-tabulator"
+homepage = "https://github.com/mossadnik/json_tabulator"
 
 [tool.poetry.dependencies]
 python = "^3.9"

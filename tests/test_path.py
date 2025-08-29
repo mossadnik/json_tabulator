@@ -1,5 +1,5 @@
 import pytest
-from json_tables.expression import Expression, Star, Key, Index
+from json_tabulator.expression import Expression, Star, Key, Index
 
 
 @pytest.mark.parametrize('path,expected', [
