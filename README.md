@@ -32,15 +32,15 @@ The document consists of a document-level value `id` as well as a nested sub-tab
 To do this, we write a query that defines the conversion into a table like this:
 
 ```python
-from json_tabulator import query
+from json_tabulator import tabulate
 
-my_query = query({
+query = tabulate({
     'document_id': 'id',
     'row_id': 'table.*.id',
     'row_name': 'table.*.name'
 })
 
-rows = my_query.execute(data)
+rows = query.get_rows(data)
 ```
 
 This returns an iterator of rows, where each row is a dict `{<column_name>: <value>}`:

@@ -1,6 +1,6 @@
 """Test documentation examples."""
 
-from json_tabulator import query
+from json_tabulator import tabulate
 
 
 def test_readme_example_query():
@@ -12,13 +12,13 @@ def test_readme_example_query():
         ]
     }
 
-    my_query = query({
+    query = tabulate({
         'document_id': 'id',
         'row_id': 'table.*.id',
         'row_name': 'table.*.name'
     })
 
-    rows = my_query.execute(data)
+    rows = query.get_rows(data)
 
     expected = [
         {'document_id': 'doc-1', 'row_id': 1, 'row_name': 'row-1'},
@@ -30,6 +30,6 @@ def test_readme_example_query():
 
 def test_query_array():
     data = [{'a': 1}]
-    q = query({'x': '$.*.a'})
-    actual = list(q.execute(data))
+    q = tabulate({'x': '$.*.a'})
+    actual = list(q.get_rows(data))
     assert actual == [{'x': 1}]

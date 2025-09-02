@@ -1,7 +1,7 @@
 import pytest
 from typing import Generator
 from json_tabulator.query import QueryPlan
-from json_tabulator.expression import Expression, Star, Key
+from json_tabulator.expression import Expression, STAR
 
 
 def test_raises_for_invalid_queries():
@@ -10,8 +10,8 @@ def test_raises_for_invalid_queries():
     Expressions do not all coincide.
     """
     query = {
-        'a_b': Expression((Key('a'), Star(), Key('b'))),
-        'x_y': Expression((Key('x'), Star(), Key('y')))
+        'a_b': Expression(('a', STAR, 'b')),
+        'x_y': Expression(('x', STAR, 'y'))
     }
     with pytest.raises(ValueError):
         QueryPlan.from_dict(query)
@@ -19,8 +19,8 @@ def test_raises_for_invalid_queries():
 
 def test_returns_row_generator_for_valid_queries():
     query = {
-        'a_b': Expression((Key('a'), Star(), Key('b'))),
-        'x_y': Expression((Key('x'), Key('y')))
+        'a_b': Expression(('a', STAR, 'b')),
+        'x_y': Expression(('x', 'y'))
     }
     data = {
         'a': [{'b': 'a_b_0'}, {'b': 'a_b_1'}],
@@ -36,14 +36,14 @@ def test_returns_row_generator_for_valid_queries():
 
 
 def test_optionally_omits_missing_attributes():
-    query = {'a': Expression((Key('a'),)), 'b': Expression((Key('b'),))}
+    query = {'a': Expression(('a',)), 'b': Expression(('b',))}
     data = {'b': 'b'}
     rows = list(QueryPlan.from_dict(query).execute(data, omit_missing_attributes=True))
     assert rows == [{'b': 'b'}]
 
 
 def test_optionally_missing_attributes_are_set_to_None():
-    query = {'a': Expression((Key('a'),)), 'b': Expression((Key('b'),))}
+    query = {'a': Expression(('a',)), 'b': Expression(('b',))}
     data = {'b': 'b'}
     rows = list(QueryPlan.from_dict(query).execute(data, omit_missing_attributes=False))
     assert rows == [{'a': None, 'b': 'b'}]

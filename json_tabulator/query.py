@@ -30,7 +30,7 @@ class QueryPlan:
                 raise ValueError(f'Illegal query: Paths {table} and {query_path} are not compatible.')
 
             query_path = max(query_path, table, key=len)
-            steps[table][name] = tuple(seg.value for seg in expr[len(table):])
+            steps[table][name] = tuple(seg for seg in expr[len(table):])
 
         return cls(path=query_path, extracts=steps)
 
@@ -56,7 +56,7 @@ class QueryPlan:
                     for item in data:
                         yield from _recurse(item, head, tail, extract)
                 elif isinstance(data, dict):
-                    yield from _recurse(data.get(current.value), head, tail, extract)
+                    yield from _recurse(data.get(current), head, tail, extract)
             else:
                 yield extract
 

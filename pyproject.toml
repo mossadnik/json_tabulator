@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "json_tabulator"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simple query language to extract tables from JSON."
 authors = ["Matthias Ossadnik <ossadnik.matthias@gmail.com>"]
 readme = "README.md"
@@ -27,6 +27,8 @@ ruff = "^0.8.6"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
+
+[tool.poetry_bumpversion.file."json_tabulator/__init__.py"]
 
 [build-system]
 requires = ["poetry-core"]

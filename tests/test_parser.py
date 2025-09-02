@@ -1,18 +1,18 @@
 import pytest
-from json_tabulator.expression import Key, Star, Index
+from json_tabulator.expression import STAR
 from json_tabulator.parser import parse_expression, InvalidExpression
 
 
 @pytest.mark.parametrize('s, expected', [
     ['', ()],
-    ['a', (Key('a'),)],
-    ['a.b', (Key('a'), Key('b'))],
-    ['a.*', (Key('a'), Star())],
-    ['*', (Star(),)],
-    ['123abc', (Key('123abc'),)],
-    ['123', (Index(123),)],
-    ['"123"', (Key('123'),)],
-    ['"123"', (Key('123'),)],
+    ['a', ('a',)],
+    ['a.b', ('a', 'b')],
+    ['a.*', ('a', STAR)],
+    ['*', (STAR,)],
+    ['123abc', ('123abc',)],
+    ['123', (123,)],
+    ['"123"', ('123',)],
+    ['"123"', ('123',)],
 ])
 def test_accepts(s, expected):
     """

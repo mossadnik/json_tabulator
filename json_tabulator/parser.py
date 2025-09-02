@@ -1,11 +1,11 @@
 
-from .expression import Expression, Key, Index, Star
+from .expression import Expression, STAR
 
 from parsy import string, regex, eof, alt, ParseError
 
 
 dot = string('.')
-star = string('*').result(Star())
+star = string('*').result(STAR)
 root = string('$')
 forbidden = ''.join(['"', "'", '.', '$', '*'])
 end_of_segment = eof | dot
@@ -14,9 +14,9 @@ end_of_segment = eof | dot
 def make_quoted_key(q: str):
     return string(q) >> regex(f'({2 * q}|[^{q}])+') << string(q)
 
-key = regex(f'[^{forbidden}]+').map(Key)
-quoted_key = (make_quoted_key('"') | make_quoted_key("'")).map(Key)
-number = regex(r'\d+').map(lambda x: Index(int(x)))
+key = regex(f'[^{forbidden}]+')
+quoted_key = (make_quoted_key('"') | make_quoted_key("'"))
+number = regex(r'\d+').map(int)
 
 def segment_with_ending(ending):
   return alt(*[p << ending for p in [number, quoted_key, key, star]])

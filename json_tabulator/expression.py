@@ -3,27 +3,11 @@ import itertools as it
 
 
 @dataclass(frozen=True)
-class Segment:
-    pass
-
-@dataclass(frozen=True)
-class Key(Segment):
-    value: str
-
-
-@dataclass(frozen=True)
-class Star(Segment):
+class Star:
     pass
 
 
-@dataclass(frozen=True)
-class Index(Segment):
-    value: int
-
-
-
-def is_wildcard(segment: Segment):
-    return isinstance(segment, Star)
+STAR = Star()
 
 
 class Expression(tuple):
@@ -34,10 +18,10 @@ class Expression(tuple):
         def render_element(seg):
             if isinstance(seg, Star):
                 return '*'
-            elif isinstance(seg, Key):
-                return quote(seg.value)
-            elif isinstance(seg, Index):
-                return str(seg.value)
+            elif isinstance(seg, str):
+                return quote(seg)
+            elif isinstance(seg, int):
+                return str(seg)
             else:
                 raise ValueError(f'Not a path segment: {seg}')
 
@@ -47,7 +31,7 @@ class Expression(tuple):
         return self.to_string()
 
     def _iter_generic(self):
-        return (seg if isinstance(seg, Key) else Star() for seg in self)
+        return (seg if isinstance(seg, str) else STAR for seg in self)
 
     def get_attribute(self):
         return Expression(self._iter_generic())
@@ -55,14 +39,14 @@ class Expression(tuple):
     def get_table(self):
         idx = -1
         for i, p in enumerate(self._iter_generic()):
-            if not isinstance(p, Key):
+            if not isinstance(p, str):
                 idx = i
         return Expression(it.islice(self._iter_generic(), idx + 1))
 
     def is_valid(self):
         has_valid_elements = all(
-            isinstance(value, Key) and isinstance(value.value, str)
-            or isinstance(value, Index) and value.value >= 0
+            isinstance(value, str)
+            or isinstance(value, int) and value >= 0
             or isinstance(value, Star)
             for value in self
         )
@@ -75,14 +59,14 @@ class Expression(tuple):
     def get_row(self):
         idx = -1
         for i, seg in enumerate(self):
-            if isinstance(seg, Index):
+            if isinstance(seg, int):
                 idx = i
             elif isinstance(seg, Star):
                 raise ValueError(f'Cannot get row because path is not concrete: {self}.')
         return Expression(self[:idx + 1])
 
     def is_generic(self):
-        return not any(isinstance(seg, Index) for seg in self)
+        return not any(isinstance(seg, int) for seg in self)
 
     def is_concrete(self):
         return not any(isinstance(seg, Star) for seg in self)

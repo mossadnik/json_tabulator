@@ -1,15 +1,15 @@
 import pytest
-from json_tabulator.expression import expression, Star, Key, Index
+from json_tabulator.expression import expression, STAR
 
 
 @pytest.mark.parametrize('path,expected', [
-    [(Key('a'), Index(0), Key('b')), True],
-    [(Key('a'), Star(), Key('b')), True],
-    [(Index(1), Key('a')), True],
-    [(Key('a'), Index(-1)), False],
-    [(Index(1), Index(2)), True],
-    [(Star(), Star()), True],
-    [(Index(2), Star()), False],
+    [('a', 0, 'b'), True],
+    [('a', STAR, 'b'), True],
+    [(1, 'a'), True],
+    [('a', -1), False],
+    [(1, 2), True],
+    [(STAR, STAR), True],
+    [(2, STAR), False],
 ])
 def test_is_valid(path: tuple, expected: bool):
     """
@@ -21,10 +21,10 @@ def test_is_valid(path: tuple, expected: bool):
 
 
 @pytest.mark.parametrize('path,expected', [
-    [(Key('a'), Key('b')), True],
-    [(Key('a'), Star(), Key('b')), True],
-    [(Key('a'), Index(0), Key('b')), False],
-    [(Key('a'), Index(0), Key('b'), Star()), False]
+    [('a', 'b'), True],
+    [('a', STAR, 'b'), True],
+    [('a', 0, 'b'), False],
+    [('a', 0, 'b', STAR), False]
 ])
 def test_is_generic(path: tuple, expected: bool):
     """
@@ -35,26 +35,26 @@ def test_is_generic(path: tuple, expected: bool):
 
 
 @pytest.mark.parametrize('path,expected', [
-    [(Key('a'), Key('b')), True],
-    [(Key('a'), Star(), Key('b')), False],
-    [(Key('a'), Index(0), Key('b')), True],
-    [(Key('a'), Index(0), Key('b'), Star()), False]
+    [('a', 'b'), True],
+    [('a', STAR, 'b'), False],
+    [('a', 0, 'b'), True],
+    [('a', 0, 'b', STAR), False]
 ])
 def test_is_concrete(path: tuple, expected: bool):
     """
-    - A path is concrete if it does not contain the wildcard Star().
+    - A path is concrete if it does not contain the wildcard STAR.
     """
     path = expression(path)
     assert path.is_concrete() == expected
 
 
 @pytest.mark.parametrize('this, other, expected', [
-    [(Key('a'), Key('b')), (Key('a'), Key('b')), True],
-    [(Key('a'),), (Key('a'), Key('b')), True],
-    [(Key('a'), Key('b')), (Key('a'), Key('c')), False],
-    [(Key('a'), Star(), Key('b')), (Key('a'), Star()), True],
-    [(Key('a'), Index(0), Key('b')), (Key('a'), Index(0)), True],
-    [(Key('a'), Index(0), Key('b')), (Key('a'), Index(1)), False]
+    [('a', 'b'), ('a', 'b'), True],
+    [('a',), ('a', 'b'), True],
+    [('a', 'b'), ('a', ('c')), False],
+    [('a', STAR, 'b'), ('a', STAR), True],
+    [('a', 0, 'b'), ('a', 0), True],
+    [('a', 0, 'b'), ('a', 1), False]
 ])
 def test_coincides_with(this: tuple, other: tuple, expected: bool):
     """
@@ -67,13 +67,13 @@ def test_coincides_with(this: tuple, other: tuple, expected: bool):
 
 
 @pytest.mark.parametrize('path, expected', [
-    [(Key('a'), Index(0), Key('b')), (Key('a'), Star(), Key('b'))],
-    [(Key('a'), Star(), Key('b')), (Key('a'), Star(), Key('b'))],
-    [(Key('a'), Key('b')), (Key('a'), Key('b'))]
+    [('a', 0, 'b'), ('a', STAR, 'b')],
+    [('a', STAR, 'b'), ('a', STAR, 'b')],
+    [('a', 'b'), ('a', 'b')]
 ])
 def test_get_attribute(path: tuple, expected: tuple):
     """
-    - get_attribute replaces all array indices with Star(), returning a generic path
+    - get_attribute replaces all array indices with STAR, returning a generic path
     - This path can be used to select the path as an attribute in a table
     """
     path, expected = expression(path), expression(expected)
@@ -83,13 +83,13 @@ def test_get_attribute(path: tuple, expected: tuple):
 
 
 @pytest.mark.parametrize('path, expected', [
-    [(Key('a'), Index(0), Key('b')), (Key('a'), Star())],
-    [(Key('a'), Star(), Key('b')), (Key('a'), Star())],
-    [(Key('a'), Key('b')), ()]
+    [('a', 0, 'b'), ('a', STAR)],
+    [('a', STAR, 'b'), ('a', STAR)],
+    [('a', 'b'), ()]
 ])
 def test_get_table(path: tuple, expected: tuple):
     """
-    - get_table returns the generic path up to the last Star() element.
+    - get_table returns the generic path up to the last STAR element.
     - This path corresponds to a sub-table in the JSON document.
     """
     path, expected = expression(path), expression(expected)
@@ -99,9 +99,9 @@ def test_get_table(path: tuple, expected: tuple):
 
 
 @pytest.mark.parametrize('path, expected', [
-    [(Key('a'), Index(0), Key('b')), (Key('a'), Index(0))],
-    [(Key('a'), Index(0), Key('b'), Index(1), Key('c')), (Key('a'), Index(0), Key('b'), Index(1))],
-    [(Key('a'), Key('b')), ()],
+    [('a', 0, 'b'), ('a', 0)],
+    [('a', 0, 'b', 1, ('c')), ('a', 0, 'b', 1)],
+    [('a', 'b'), ()],
 ])
 def test_get_row(path: tuple, expected: tuple):
     """
@@ -116,25 +116,25 @@ def test_get_row(path: tuple, expected: tuple):
 
 def test_get_row_raises_if_path_not_concrete():
     """Rows can only be computed from concrete paths."""
-    path = expression(Key('a'), Star())
+    path = expression('a', STAR)
     with pytest.raises(ValueError):
         path.get_row()
 
 
-@pytest.mark.parametrize('obj', [Key('a'), Index(1), Star])
+@pytest.mark.parametrize('obj', [STAR])
 def test_Segments_are_hashable(obj):
     hash(obj)  # does not raise
 
 
 @pytest.mark.parametrize('path, expected', [
     [(), '$'],
-    [(Key('a'), Star()), '$.a.*'],
-    [Key('*'), '$."*"'],
-    [(Key('a'), Key('*')), '$.a."*"'],
-    [Key('123'), '$."123"'],
-    [Key('.'), '$."."'],
-    [Key('a.b.c'), '$."a.b.c"'],
-    [Index(1), '$.1'],
+    [('a', STAR), '$.a.*'],
+    ['*', '$."*"'],
+    [('a', '*'), '$.a."*"'],
+    ['123', '$."123"'],
+    ['.', '$."."'],
+    ['a.b.c', '$."a.b.c"'],
+    [1, '$.1'],
 ])
 def test_expression_path_string(path, expected):
     actual = expression(path).to_string()
