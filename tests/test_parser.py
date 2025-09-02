@@ -1,5 +1,5 @@
 import pytest
-from json_tabulator.expression import STAR
+from json_tabulator.expression import STAR, KEY, PATH
 from json_tabulator.parser import parse_expression, InvalidExpression
 
 
@@ -13,6 +13,9 @@ from json_tabulator.parser import parse_expression, InvalidExpression
     ['123', (123,)],
     ['"123"', ('123',)],
     ['"123"', ('123',)],
+    # functions
+    ['*.@key', (STAR, KEY)],
+    ['*.@path', (STAR, PATH)]
 ])
 def test_accepts(s, expected):
     """
@@ -32,6 +35,10 @@ def test_accepts(s, expected):
     '*abc',
     'a"bc',
     "a'bc",
+    '@key',
+    '@path',
+    '*.@key.a',
+    '*.@path.a',
 ])
 def test_rejects(s):
     with pytest.raises(InvalidExpression):

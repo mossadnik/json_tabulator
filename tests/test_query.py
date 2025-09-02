@@ -1,7 +1,6 @@
 import pytest
 from typing import Generator
-from json_tabulator.query import QueryPlan
-from json_tabulator.expression import Expression, STAR
+from json_tabulator import tabulate
 
 
 def test_raises_for_invalid_queries():
@@ -9,24 +8,23 @@ def test_raises_for_invalid_queries():
     A query is invalid if it requests attributes from tables whose
     Expressions do not all coincide.
     """
-    query = {
-        'a_b': Expression(('a', STAR, 'b')),
-        'x_y': Expression(('x', STAR, 'y'))
-    }
     with pytest.raises(ValueError):
-        QueryPlan.from_dict(query)
+        tabulate({
+            'a_b': '$.a.*.b',
+            'x_y': '$.x.*.y',
+        })
 
 
 def test_returns_row_generator_for_valid_queries():
-    query = {
-        'a_b': Expression(('a', STAR, 'b')),
-        'x_y': Expression(('x', 'y'))
-    }
+    query = tabulate({
+        'a_b': '$.a.*.b',
+        'x_y': '$.x.y',
+    })
     data = {
         'a': [{'b': 'a_b_0'}, {'b': 'a_b_1'}],
         'x': {'y': 'x_y'}
     }
-    actual = QueryPlan.from_dict(query).execute(data, omit_missing_attributes=False)
+    actual = query.get_rows(data)
     assert isinstance(actual, Generator)
     rows = list(actual)
     assert rows == [
@@ -36,14 +34,55 @@ def test_returns_row_generator_for_valid_queries():
 
 
 def test_optionally_omits_missing_attributes():
-    query = {'a': Expression(('a',)), 'b': Expression(('b',))}
+    query = tabulate(
+        {'a': 'a', 'b': 'b'},
+        omit_missing_attributes=True
+    )
     data = {'b': 'b'}
-    rows = list(QueryPlan.from_dict(query).execute(data, omit_missing_attributes=True))
-    assert rows == [{'b': 'b'}]
+    actual = list(query.get_rows(data))
+    assert actual == [{'b': 'b'}]
 
 
 def test_optionally_missing_attributes_are_set_to_None():
-    query = {'a': Expression(('a',)), 'b': Expression(('b',))}
+    query = tabulate(
+        {'a': 'a', 'b': 'b'},
+        omit_missing_attributes=False
+    )
     data = {'b': 'b'}
-    rows = list(QueryPlan.from_dict(query).execute(data, omit_missing_attributes=False))
+    rows = list(query.get_rows(data))
     assert rows == [{'a': None, 'b': 'b'}]
+
+
+def test_KEY_with_array():
+    query = tabulate({'key': 'a.*.@key'})
+    data = {'a': [0, 1, 2]}
+    rows = list(query.get_rows(data))
+    assert rows == [{'key': 0}, {'key': 1}, {'key': 2}]
+
+
+def test_PATH_with_array():
+    query = tabulate({'path': 'a.*.@path'})
+    data = {'a': [0, 1, 2]}
+    rows = list(query.get_rows(data))
+    assert rows == [{'path': '$.a.0'}, {'path': '$.a.1'}, {'path': '$.a.2'}]
+
+
+def test_fixed_array_index():
+    query = tabulate({'x': '$.1.a'})
+    data = [{'a': 0}, {'a': 1}]
+    rows = list(query.get_rows(data))
+    assert rows == [{'x': 1}]
+
+
+def test_STAR_with_dict():
+    query = tabulate({'x': '*.a'})
+    data = {'a': {'a': 1}, 'b': {'a': 2}}
+    rows = list(query.get_rows(data))
+    assert rows == [{'x': 1}, {'x': 2}]
+
+
+def test_KEY_with_dict():
+    query = tabulate({'x': '*.@key'})
+    data = {'a': {'a': 1}, 'b': {'a': 2}}
+    rows = list(query.get_rows(data))
+    assert rows == [{'x': 'a'}, {'x': 'b'}]

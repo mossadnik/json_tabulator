@@ -53,6 +53,48 @@ This returns an iterator of rows, where each row is a dict `{<column_name>: <val
 ]
 ```
 
+### Path Syntax
+
+The syntax for path expressions is similar to JSON Path. A path consists of an optional root element `'$'` followed by zero or more segments separated by `'.'`.
+
+#### Dict key
+
+Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say ""hello""" -> say hello`.
+
+Keys _must_ be quoted if they
+* contain any of the characters `*$@.'"`, or if the
+* contain only digits (these cases would be interpreted as array indices otherwise)
+
+#### Array index
+
+Array indices are entered as numbers without quotes, e.g. `123`. Mostly useful for debugging, usually arrays are iterated over when tabulating data.
+
+#### Wildcard `*`
+
+An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays.
+
+#### `@key` and `@path` directives.
+
+The `@key` and `@path` directives are used to get information about the current key (dict key or array index) or the full path, respectively.
+
+Both must follow after a wildcard, and must be the last segment in the path. For example `*.@key` is valid, but `a.@key` and `*.@key.b` are not.
+
+The output of `@path` can be used as a primary key within the scope of the parsed object.
+
+### Data Extraction
+
+#### Query Semantics
+
+Values for all attributes in a query are combined into individual rows. Attributes from different parts of the document are combined by "joining" on the lowest common ancestor.
+
+For this reason, all wildcards for all attributes must lie on a common path. Violating this condition would lead to implicit cross joins and the associated data blow-up.
+
+For example, the paths `$.a.*` and `$.b.*` cannot be combined because the wildcards are not on the same path. On the other hand, `$.a` and `$.b.*.c` can be combined.
+
+Queries are analysed and compiled independent of the data to be queried
+
+If you think you need to get a combination of attributes that is not allowed, think again. If you still think so just run multiple queries and do the join afterwards.
+
 ## Related Projects
 
 - [jsontable](https://pypi.org/project/jsontable/) has the same purpose but is not maintained.

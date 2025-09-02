@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import itertools as it
 import enum
 
@@ -10,6 +9,14 @@ class Segment(enum.Enum):
 
 
 STAR = Segment.star
+KEY = Segment.key
+PATH = Segment.path
+
+
+def is_function(path: tuple):
+    if len(path) != 1:
+        return False
+    return path[0] in (KEY, PATH)
 
 
 class Expression(tuple):
@@ -20,6 +27,8 @@ class Expression(tuple):
         def render_element(seg):
             if seg is STAR:
                 return '*'
+            elif seg in (PATH, KEY):
+                return f'@{seg.name}'
             elif isinstance(seg, str):
                 return quote(seg)
             elif isinstance(seg, int):
@@ -32,43 +41,15 @@ class Expression(tuple):
     def __str__(self):
         return self.to_string()
 
-    def _iter_generic(self):
-        return (seg if isinstance(seg, str) else STAR for seg in self)
-
-    def get_attribute(self):
-        return Expression(self._iter_generic())
-
     def get_table(self):
         idx = -1
-        for i, p in enumerate(self._iter_generic()):
-            if not isinstance(p, str):
-                idx = i
-        return Expression(it.islice(self._iter_generic(), idx + 1))
-
-    def is_valid(self):
-        has_valid_elements = all(
-            isinstance(value, str)
-            or isinstance(value, int) and value >= 0
-            or value is STAR
-            for value in self
-        )
-        return has_valid_elements and (self.is_generic() or self.is_concrete())
-
-    def coincides_with(self, other):
-        length = min(len(self), len(other))
-        return self[:length] == other[:length]
-
-    def get_row(self):
-        idx = -1
         for i, seg in enumerate(self):
-            if isinstance(seg, int):
+            if seg is STAR:
                 idx = i
-            elif seg is STAR:
-                raise ValueError(f'Cannot get row because path is not concrete: {self}.')
         return Expression(self[:idx + 1])
 
-    def is_generic(self):
-        return not any(isinstance(seg, int) for seg in self)
+    def coincides_with(self, other):
+        return all(a == b for a, b in zip(self, other))
 
     def is_concrete(self):
         return not any(seg is STAR for seg in self)
