@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 import itertools as it
+import enum
 
 
-@dataclass(frozen=True)
-class Star:
-    pass
+class Segment(enum.Enum):
+    star = enum.auto()
+    key = enum.auto()
+    path = enum.auto()
 
 
-STAR = Star()
+STAR = Segment.star
 
 
 class Expression(tuple):
@@ -16,7 +18,7 @@ class Expression(tuple):
 
     def to_string(self):
         def render_element(seg):
-            if isinstance(seg, Star):
+            if seg is STAR:
                 return '*'
             elif isinstance(seg, str):
                 return quote(seg)
@@ -47,7 +49,7 @@ class Expression(tuple):
         has_valid_elements = all(
             isinstance(value, str)
             or isinstance(value, int) and value >= 0
-            or isinstance(value, Star)
+            or value is STAR
             for value in self
         )
         return has_valid_elements and (self.is_generic() or self.is_concrete())
@@ -61,7 +63,7 @@ class Expression(tuple):
         for i, seg in enumerate(self):
             if isinstance(seg, int):
                 idx = i
-            elif isinstance(seg, Star):
+            elif seg is STAR:
                 raise ValueError(f'Cannot get row because path is not concrete: {self}.')
         return Expression(self[:idx + 1])
 
@@ -69,7 +71,7 @@ class Expression(tuple):
         return not any(isinstance(seg, int) for seg in self)
 
     def is_concrete(self):
-        return not any(isinstance(seg, Star) for seg in self)
+        return not any(seg is STAR for seg in self)
 
     def __add__(self, other):
         return Expression(super().__add__(other))

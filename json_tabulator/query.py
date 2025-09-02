@@ -2,7 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 from collections import defaultdict
 
-from .expression import Expression, Star
+from .expression import Expression, STAR
 
 
 def nested_get(data, keys) -> tuple[Any, bool]:
@@ -35,7 +35,7 @@ class QueryPlan:
         return cls(path=query_path, extracts=steps)
 
     def execute(self, data, omit_missing_attributes: bool):
-        def _recurse(data, head, tail, extract):
+        def _recurse(data, head, tail, path, extract):
             if head in self.extracts:
                 update = (
                     (name, *nested_get(data, keys))
@@ -52,12 +52,12 @@ class QueryPlan:
             if tail:
                 current, tail = tail[0], tail[1:]
                 head = head + (current,)
-                if isinstance(current, Star) and isinstance(data, list):
-                    for item in data:
-                        yield from _recurse(item, head, tail, extract)
+                if current is STAR and isinstance(data, list):
+                    for idx, item in enumerate(data):
+                        yield from _recurse(item, head, tail, path + (idx,), extract)
                 elif isinstance(data, dict):
-                    yield from _recurse(data.get(current), head, tail, extract)
+                    yield from _recurse(data.get(current), head, tail, path + (current,), extract)
             else:
                 yield extract
 
-        yield from _recurse(data, Expression(), self.path, {})
+        yield from _recurse(data, Expression(), self.path, (), {})
