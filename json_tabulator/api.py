@@ -16,6 +16,11 @@ class Tabulator:
     plan: QueryPlan
     omit_missing_attributes: bool
 
+    @property
+    def names(self) -> list[str]:
+        """Returns the names of all attributes."""
+        return [a.name for a in self.attributes]
+
     def get_rows(self, data):
         return self.plan.execute(data, omit_missing_attributes=self.omit_missing_attributes)
 
