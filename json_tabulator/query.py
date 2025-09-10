@@ -54,18 +54,11 @@ class QueryPlan:
 
         def _recurse(data, head, tail, path, extract):
             if head in self.extracts:
-                values = (
-                    (name, *_extract(data, item, path))
-                    for name, item in self.extracts[head].items()
-                )
-                extract = {
-                    **extract,
-                    **{
-                        name: value
-                        for name, value, success in values
-                        if success or not omit_missing_attributes
-                    }
-                }
+                extract = dict(extract)
+                for name, item in self.extracts[head].items():
+                    value, success = _extract(data, item, path)
+                    if success or not omit_missing_attributes:
+                        extract[name] = value
             if tail:
                 current, tail = tail[0], tail[1:]
                 head = head + (current,)
