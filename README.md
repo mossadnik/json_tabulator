@@ -2,7 +2,7 @@
 
 A simple query language for extracting tables from JSON-like objects.
 
-Working with tabular data is much easier than working with nested documents. json-tables helps to extract tables from JSON-like objects in a simple, declarative manner. All further processing is left to the many powerful tools that exist for working with tables, such as Spark or Pandas.
+Working with tabular data is much easier than working with nested documents. json_tabulator helps to extract tables from JSON-like objects in a simple, declarative manner. All further processing is left to the many powerful tools that exist for working with tables, such as Spark or Pandas.
 
 
 ## Installation
@@ -59,11 +59,11 @@ The syntax for path expressions is similar to JSON Path. A path consists of an o
 
 #### Dict key
 
-Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say ""hello""" -> say hello`.
+Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say ""hello"""` is interpreted as `say hello`.
 
-Keys _must_ be quoted if they
-* contain any of the characters `*$@.'"`, or if the
-* contain only digits (these cases would be interpreted as array indices otherwise)
+Keys _must_ be quoted if
+* they contain any of the characters `*$@.'"`, or if
+* they contain only digits (these cases would be interpreted as array indices otherwise)
 
 #### Array index
 
@@ -94,6 +94,12 @@ For example, the paths `$.a.*` and `$.b.*` cannot be combined because the wildca
 Queries are analysed and compiled independent of the data to be queried
 
 If you think you need to get a combination of attributes that is not allowed, think again. If you still think so just run multiple queries and do the join afterwards.
+
+#### Returned values
+
+All extracted values are returned as-is with no further conversion. Returned values are not limited to atomic types, dicts and lists are also allowed.
+
+By default, all requested attributes are returned, the value `None` is used if an attribute cannot be found in the data. When the `omit_missing_attributes` flag is set in `tabulate`, each row only contains keys that are found in the data, allowing for downstream error-handling.
 
 ## Related Projects
 
