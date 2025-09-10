@@ -86,3 +86,10 @@ def test_KEY_with_dict():
     data = {'a': {'a': 1}, 'b': {'a': 2}}
     rows = list(query.get_rows(data))
     assert rows == [{'x': 'a'}, {'x': 'b'}]
+
+
+def test_query_array():
+    data = [{'a': 1}]
+    q = tabulate({'x': '$.*.a'})
+    actual = list(q.get_rows(data))
+    assert actual == [{'x': 1}]
