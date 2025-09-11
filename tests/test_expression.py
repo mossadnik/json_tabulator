@@ -1,5 +1,5 @@
 import pytest
-from json_tabulator.expression import expression, STAR, KEY, PATH
+from json_tabulator.expression import expression, STAR, INDEX, PATH
 
 
 @pytest.mark.parametrize('path,expected', [
@@ -37,7 +37,7 @@ def test_coincides_with(this: tuple, other: tuple, expected: bool):
 @pytest.mark.parametrize('path, expected', [
     [('a', STAR, 'b'), ('a', STAR)],
     [('a', 'b'), ()],
-    [('a', STAR, KEY), ('a', STAR)],
+    [('a', STAR, INDEX), ('a', STAR)],
     [('a', 1), ()],
 ])
 def test_get_table(path: tuple, expected: tuple):
@@ -58,15 +58,15 @@ def test_Segments_are_hashable(obj):
 
 @pytest.mark.parametrize('path, expected', [
     [(), '$'],
-    [('a', STAR), '$.a.*'],
+    [('a', STAR), '$.a[*]'],
     ['*', '$."*"'],
     [('a', '*'), '$.a."*"'],
     ['123', '$."123"'],
     ['.', '$."."'],
     ['a.b.c', '$."a.b.c"'],
-    [1, '$.1'],
-    [(STAR, KEY), '$.*.@key'],
-    [(STAR, PATH), '$.*.@path']
+    [1, '$[1]'],
+    [(STAR, INDEX), '$[*].(index)'],
+    [(STAR, PATH), '$[*].(path)']
 ])
 def test_expression_path_string(path, expected):
     actual = expression(path).to_string()

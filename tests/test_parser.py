@@ -1,5 +1,5 @@
 import pytest
-from json_tabulator.expression import STAR, KEY, PATH
+from json_tabulator.expression import STAR, INDEX, PATH
 from json_tabulator.parser import parse_expression, InvalidExpression
 
 
@@ -8,16 +8,18 @@ from json_tabulator.parser import parse_expression, InvalidExpression
     ['a.b', ('a', 'b')],
     ['a.*', ('a', STAR)],
     ['a[*]', ('a', STAR)],
+    ['a.[*]', ('a', STAR)],
     ['*', (STAR,)],
     ['"\\"a\\""', ('"a"',)],
     ["'\\'a\\''", ("'a'",)],
     ['a["123"]', ('a', '123')],
     ["a['123']", ('a', '123')],
     ['a[1]["cd"]', ('a', 1, 'cd')],
+    ['a.[1].["cd"]', ('a', 1, 'cd')],
     ['"123"', ('123',)],
     ['"123"', ('123',)],
     # functions
-    ['*.(key)', (STAR, KEY)],
+    ['*.(index)', (STAR, INDEX)],
     ['*.(path)', (STAR, PATH)],
 ])
 def test_accepts(s, expected):
@@ -40,9 +42,9 @@ def test_accepts(s, expected):
     'a"bc',
     "a'bc",
     '(notafunction)',
-    '(key)',
+    '(index)',
     '(path)',
-    '*.(key).a',
+    '*.(index).a',
     '*.(path).a',
     '123abc',
     '123',

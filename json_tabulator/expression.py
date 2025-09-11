@@ -4,19 +4,19 @@ import enum
 
 class Segment(enum.Enum):
     star = enum.auto()
-    key = enum.auto()
+    index = enum.auto()
     path = enum.auto()
 
 
 STAR = Segment.star
-KEY = Segment.key
+INDEX = Segment.index
 PATH = Segment.path
 
 
 def is_function(path: tuple):
     if len(path) != 1:
         return False
-    return path[0] in (KEY, PATH)
+    return path[0] in (INDEX, PATH)
 
 
 class Expression(tuple):
@@ -26,17 +26,17 @@ class Expression(tuple):
     def to_string(self):
         def render_element(seg):
             if seg is STAR:
-                return '*'
-            elif seg in (PATH, KEY):
-                return f'@{seg.name}'
+                return '[*]'
+            elif seg in (PATH, INDEX):
+                return '.' + f'({seg.name})'
             elif isinstance(seg, str):
-                return quote(seg)
+                return '.' + quote(seg, if_required=True)
             elif isinstance(seg, int):
-                return str(seg)
+                return f'[{seg}]'
             else:
                 raise ValueError(f'Not a path segment: {seg}')
 
-        return '.'.join(it.chain(['$'], map(render_element, self)))
+        return ''.join(it.chain(['$'], map(render_element, self)))
 
     def __str__(self):
         return self.to_string()
@@ -64,12 +64,14 @@ def expression(*args) -> Expression:
     return Expression(args)
 
 
-def quote(s: str) -> str:
+def quote(s: str, if_required: bool = True) -> str:
+    if not s:
+        return s
     require_quote = (
-        s.isdigit()
-        or s == '*'
-        or '.' in s
+        not if_required
+        or s[0].isdigit()
+        or any(c in s for c in '$*.[]()"\'')
     )
     if require_quote:
-        return f'"{s}"'
+        return '"{}"'.format(s.replace('"', '\\"'))
     return s

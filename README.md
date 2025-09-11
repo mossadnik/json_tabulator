@@ -62,17 +62,19 @@ The syntax for path expressions is very similar to a subset of JSON Path. A path
 Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say \"hello\""` is interpreted as `say "hello"`.
 
 Keys _must_ be quoted if
-* they contain any of the characters `*$.'"[]()`, or if
+* they contain any of the characters `* $ . ' " [] ()`, or if
 * they start with a digit
 * they are used in a subscript, e.g. `$["child"]` is valid, but `$[child]` is not.
 
 #### Subscripts
 
-Subscripts are entered as `[...]` without a leading `.`. Allowed values in a subscript are
+Subscripts are entered as `[]`. Allowed subscript values are
 
 * Non-negative numbers representing array indices, e.g. `$[123]`
 * Quoted dict keys, e.g. `$['a']`
 * Wildcards, e.g. `$[*]`
+
+Subscripts can be entered with or without a period, e.g. `$[*]` and `$.[*]` are both valid.
 
 #### Wildcard `*`
 
@@ -84,10 +86,10 @@ Note that in contrast to JSON path, the wildcard can be used for dicts and array
 
 Functions are written in parentheses. Currently there are two functions available:
 
-* `(key)` returns the index that corresponds to the preceding wildcard
+* `(index)` returns the index that corresponds to the preceding wildcard
 * `(path)` returns the full path up to the preceding wildcard
 
-Both functions _must_ be placed directly after a wildcard and must be at the end of the path. For example `*.(key)` is valid, but `a.(key)` and `*.(key).b` are not.
+Both functions _must_ be placed directly after a wildcard and must be at the end of the path. For example `*.(index)` is valid, but `a.(index)` and `*.(index).b` are not.
 
 The output of `(path)` is unique for all rows extracted from the document.
 

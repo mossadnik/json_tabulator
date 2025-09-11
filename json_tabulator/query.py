@@ -2,7 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 from collections import defaultdict
 
-from .expression import Expression, STAR, KEY, PATH, is_function
+from .expression import Expression, STAR, INDEX, PATH, is_function
 
 
 def nested_get(data, keys) -> tuple[Any, bool]:
@@ -47,7 +47,7 @@ class QueryPlan:
         def _extract(data, item, path):
             if isinstance(item, tuple):
                 return nested_get(data, item)
-            elif item == KEY:
+            elif item == INDEX:
                 return path[-1], True
             elif item == PATH:
                 return Expression(path).to_string(), True

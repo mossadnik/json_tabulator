@@ -1,14 +1,13 @@
 
-from .expression import Expression, STAR, KEY, PATH
+from .expression import Expression, STAR, INDEX, PATH
 
 from parsy import string, regex, eof, alt, seq, ParseError
 
 
 dot = string('.').then(eof.should_fail('expression to continue'))
-star = alt(string('*'), string('[*]')).result(STAR)
+star = string('*').result(STAR)
 root = string('$').result([])
 forbidden = ''.join(['"', "'", '\\.', '\\$', '\\*', '\\[\\]', '\\(\\)'])
-end_of_segment = eof | dot
 lparen = string('(')
 rparen = string(')')
 lbracket = string('[')
@@ -23,9 +22,9 @@ def make_quoted_member(q: str):
 unquoted_member = regex(f'[^{forbidden}0-9][^{forbidden}]*')
 quoted_member = (make_quoted_member('"') | make_quoted_member("'"))
 number = regex(r'\d+').map(int)
-func_key =  lparen >> string('key').result(KEY) << rparen
+func_index =  lparen >> string('index').result(INDEX) << rparen
 func_path = lparen >> string('path').result(PATH) << rparen
-function = alt(func_key, func_path)
+function = alt(func_index, func_path)
 
 subscript = lbracket >> alt(number, quoted_member, star) << rbracket
 
@@ -41,7 +40,7 @@ inner_segment = alt(
     dot >> quoted_member,
     dot >> star,
     dot >> function,
-    subscript
+    dot.optional() >> subscript
 )
 
 
@@ -69,7 +68,7 @@ def parse_expression(string: str) -> Expression:
         raise InvalidExpression(string)
 
     for i, part in enumerate(res):
-        if part in (KEY, PATH):
+        if part in (INDEX, PATH):
             if i == 0 or res[i - 1] != STAR:
                 raise InvalidExpression(string)
             if i < len(res) - 1:

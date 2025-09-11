@@ -54,7 +54,7 @@ def test_optionally_missing_attributes_are_set_to_None():
 
 
 def test_KEY_with_array():
-    query = tabulate({'key': 'a[*].(key)'})
+    query = tabulate({'key': 'a[*].(index)'})
     data = {'a': [0, 1, 2]}
     rows = list(query.get_rows(data))
     assert rows == [{'key': 0}, {'key': 1}, {'key': 2}]
@@ -64,7 +64,7 @@ def test_PATH_with_array():
     query = tabulate({'path': 'a[*].(path)'})
     data = {'a': [0, 1, 2]}
     rows = list(query.get_rows(data))
-    assert rows == [{'path': '$.a.0'}, {'path': '$.a.1'}, {'path': '$.a.2'}]
+    assert rows == [{'path': '$.a[0]'}, {'path': '$.a[1]'}, {'path': '$.a[2]'}]
 
 
 def test_fixed_array_index():
@@ -82,7 +82,7 @@ def test_STAR_with_dict():
 
 
 def test_KEY_with_dict():
-    query = tabulate({'x': '$.*.(key)'})
+    query = tabulate({'x': '$.*.(index)'})
     data = {'a': {'a': 1}, 'b': {'a': 2}}
     rows = list(query.get_rows(data))
     assert rows == [{'x': 'a'}, {'x': 'b'}]
