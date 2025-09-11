@@ -53,7 +53,7 @@ def test_optionally_missing_attributes_are_set_to_None():
     assert rows == [{'a': None, 'b': 'b'}]
 
 
-def test_KEY_with_array():
+def test_INDEX_with_array():
     query = tabulate({'key': 'a[*].(index)'})
     data = {'a': [0, 1, 2]}
     rows = list(query.get_rows(data))
@@ -81,7 +81,7 @@ def test_STAR_with_dict():
     assert rows == [{'x': 1}, {'x': 2}]
 
 
-def test_KEY_with_dict():
+def test_INDEX_with_dict():
     query = tabulate({'x': '$.*.(index)'})
     data = {'a': {'a': 1}, 'b': {'a': 2}}
     rows = list(query.get_rows(data))
