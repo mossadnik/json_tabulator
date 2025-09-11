@@ -5,27 +5,43 @@ from parsy import string, regex, eof, alt, seq, ParseError
 
 
 dot = string('.').then(eof.should_fail('expression to continue'))
-star = string('*').result(STAR)
-root = string('$')
-forbidden = ''.join(['"', "'", '.', '$', '*', '@'])
+star = alt(string('*'), string('[*]')).result(STAR)
+root = string('$').result([])
+forbidden = ''.join(['"', "'", '\\.', '\\$', '\\*', '\\[\\]', '\\(\\)'])
 end_of_segment = eof | dot
-at = string('@')
+lparen = string('(')
+rparen = string(')')
+lbracket = string('[')
+rbracket = string(']')
 
-def make_quoted_key(q: str):
-    return string(q) >> regex(f'({2 * q}|[^{q}])+') << string(q)
+
+def make_quoted_member(q: str):
+    def unquote(s: str) -> str: return s.replace('\\' + q, q)
+    return string(q) >> regex(f'(\\\\{q}|[^{q}])+').map(unquote) << string(q)
 
 
-key = regex(f'[^{forbidden}]+')
-quoted_key = (make_quoted_key('"') | make_quoted_key("'"))
+unquoted_member = regex(f'[^{forbidden}0-9][^{forbidden}]*')
+quoted_member = (make_quoted_member('"') | make_quoted_member("'"))
 number = regex(r'\d+').map(int)
-func_key = at >> string('key').result(KEY)
-func_path = at >> string('path').result(PATH)
+func_key =  lparen >> string('key').result(KEY) << rparen
+func_path = lparen >> string('path').result(PATH) << rparen
 function = alt(func_key, func_path)
 
+subscript = lbracket >> alt(number, quoted_member, star) << rbracket
 
-segment = alt(
-    (star.skip(dot)).then(function.map(lambda x: [STAR, x])).skip(eof),
-    *[p.skip(dot | eof) for p in [number, quoted_key, star, key]]
+initial_segment = alt(
+    root,
+    unquoted_member,
+    quoted_member,
+    subscript,
+    star,
+)
+inner_segment = alt(
+    dot >> unquoted_member,
+    dot >> quoted_member,
+    dot >> star,
+    dot >> function,
+    subscript
 )
 
 
@@ -39,10 +55,7 @@ def concat_list(*args):
     return res
 
 
-expression = alt(
-    root.optional().then(eof).result([]),
-    seq(root, dot).optional().then(segment.many()).combine(concat_list),
-)
+expression = seq(initial_segment, inner_segment.many()).combine(concat_list)
 
 
 class InvalidExpression(ValueError):
@@ -51,6 +64,15 @@ class InvalidExpression(ValueError):
 
 def parse_expression(string: str) -> Expression:
     try:
-        return Expression(expression.parse(string))
+        res = Expression(expression.parse(string))
     except ParseError:
         raise InvalidExpression(string)
+
+    for i, part in enumerate(res):
+        if part in (KEY, PATH):
+            if i == 0 or res[i - 1] != STAR:
+                raise InvalidExpression(string)
+            if i < len(res) - 1:
+                raise InvalidExpression(string)
+
+    return res

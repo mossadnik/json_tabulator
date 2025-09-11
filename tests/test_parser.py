@@ -4,18 +4,21 @@ from json_tabulator.parser import parse_expression, InvalidExpression
 
 
 @pytest.mark.parametrize('s, expected', [
-    ['', ()],
     ['a', ('a',)],
     ['a.b', ('a', 'b')],
     ['a.*', ('a', STAR)],
+    ['a[*]', ('a', STAR)],
     ['*', (STAR,)],
-    ['123abc', ('123abc',)],
-    ['123', (123,)],
+    ['"\\"a\\""', ('"a"',)],
+    ["'\\'a\\''", ("'a'",)],
+    ['a["123"]', ('a', '123')],
+    ["a['123']", ('a', '123')],
+    ['a[1]["cd"]', ('a', 1, 'cd')],
     ['"123"', ('123',)],
     ['"123"', ('123',)],
     # functions
-    ['*.@key', (STAR, KEY)],
-    ['*.@path', (STAR, PATH)]
+    ['*.(key)', (STAR, KEY)],
+    ['*.(path)', (STAR, PATH)],
 ])
 def test_accepts(s, expected):
     """
@@ -32,13 +35,17 @@ def test_accepts(s, expected):
     'a.',
     '.',
     '$.',
+    '',
     '*abc',
     'a"bc',
     "a'bc",
-    '@key',
-    '@path',
-    '*.@key.a',
-    '*.@path.a',
+    '(notafunction)',
+    '(key)',
+    '(path)',
+    '*.(key).a',
+    '*.(path).a',
+    '123abc',
+    '123',
 ])
 def test_rejects(s):
     with pytest.raises(InvalidExpression):

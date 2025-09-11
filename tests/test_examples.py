@@ -14,8 +14,8 @@ def test_readme_example_query():
 
     query = tabulate({
         'document_id': 'id',
-        'row_id': 'table.*.id',
-        'row_name': 'table.*.name'
+        'row_id': 'table[*].id',
+        'row_name': 'table[*].name'
     })
 
     rows = query.get_rows(data)

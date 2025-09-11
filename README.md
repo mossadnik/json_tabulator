@@ -36,8 +36,8 @@ from json_tabulator import tabulate
 
 query = tabulate({
     'document_id': 'id',
-    'row_id': 'table.*.id',
-    'row_name': 'table.*.name'
+    'row_id': 'table[*].id',
+    'row_name': 'table[*].name'
 })
 
 rows = query.get_rows(data)
@@ -55,15 +55,16 @@ This returns an iterator of rows, where each row is a dict `{<column_name>: <val
 
 ### Path Syntax
 
-The syntax for path expressions is similar to JSON Path. A path consists of an optional root element `'$'` followed by zero or more segments separated by `'.'`.
+The syntax for path expressions is very similar to a subset of JSON Path. A path consists of an optional root element `'$'` followed by a path that specifies what is to be extracted. The child operator `.`, subscripts `[1], ['a'], [*]` can be used for arrays or dicts.
 
 #### Dict key
 
-Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say ""hello"""` is interpreted as `say hello`.
+Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say \"hello\""` is interpreted as `say "hello"`.
 
 Keys _must_ be quoted if
-* they contain any of the characters `*$@.'"`, or if
-* they contain only digits (these cases would be interpreted as array indices otherwise)
+* they contain any of the characters `*$.'"[]()`, or if
+* they start with a digit
+* they are used in a subscript, e.g. `$["child"]` is valid, but `$[child]` is not.
 
 #### Array index
 
@@ -71,15 +72,20 @@ Array indices are entered as numbers without quotes, e.g. `123`. Mostly useful f
 
 #### Wildcard `*`
 
-An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays.
+An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays. Use either `$[*]` or `$.*`.
 
-#### `@key` and `@path` directives.
+Note that in contrast to JSON path, the wildcard can be used for dicts and arrays regardless of whether subscript is used.
 
-The `@key` and `@path` directives are used to get information about the current key (dict key or array index) or the full path, respectively.
+#### `(key)` and `(path)` functions.
 
-Both must follow after a wildcard, and must be the last segment in the path. For example `*.@key` is valid, but `a.@key` and `*.@key.b` are not.
+Functions are written in parentheses. Currently there are two functions available.
 
-The output of `@path` can be used as a primary key within the scope of the parsed object.
+* `(key)` returns the index that corresponds to the preceding wildcard
+* `(path)` returns the full path up to the preceding wildcard
+
+Both functions _must_ be placed directly after a wildcard and must be at the end of the path. For example `*.(key)` is valid, but `a.(key)` and `*.(key).b` are not.
+
+The output of `(path)` is unique for all rows extracted from the document.
 
 ### Data Extraction
 
@@ -89,7 +95,7 @@ Values for all attributes in a query are combined into individual rows. Attribut
 
 For this reason, all wildcards for all attributes must lie on a common path. Violating this condition would lead to implicit cross joins and the associated data blow-up.
 
-For example, the paths `$.a.*` and `$.b.*` cannot be combined because the wildcards are not on the same path. On the other hand, `$.a` and `$.b.*.c` can be combined.
+For example, the paths `$.a[*]` and `$.b[*]` cannot be combined because the wildcards are not on the same path. On the other hand, `$.a` and `$.b[*].c` can be combined.
 
 Queries are analysed and compiled independent of the data to be queried
 
