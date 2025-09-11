@@ -55,7 +55,7 @@ This returns an iterator of rows, where each row is a dict `{<column_name>: <val
 
 ### Path Syntax
 
-The syntax for path expressions is very similar to a subset of JSON Path. A path consists of an optional root element `'$'` followed by a path that specifies what is to be extracted. The child operator `.`, subscripts `[1], ['a'], [*]` can be used for arrays or dicts.
+The syntax for path expressions is very similar to a subset of JSON Path. A path consists of an optional root element `'$'` followed by a path that specifies what is to be extracted. The child operator `.` and subscripts `[1], ['a'], [*]` can be used for arrays or dicts.
 
 #### Dict key
 
