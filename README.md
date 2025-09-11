@@ -66,9 +66,13 @@ Keys _must_ be quoted if
 * they start with a digit
 * they are used in a subscript, e.g. `$["child"]` is valid, but `$[child]` is not.
 
-#### Array index
+#### Subscripts
 
-Array indices are entered as numbers without quotes, e.g. `123`. Mostly useful for debugging, usually arrays are iterated over when tabulating data.
+Subscripts are entered as `[...]` without a leading `.`. Allowed values in a subscript are
+
+* Non-negative numbers representing array indices, e.g. `$[123]`
+* Quoted dict keys, e.g. `$['a']`
+* Wildcards, e.g. `$[*]`
 
 #### Wildcard `*`
 
@@ -76,9 +80,9 @@ An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array
 
 Note that in contrast to JSON path, the wildcard can be used for dicts and arrays regardless of whether subscript is used.
 
-#### `(key)` and `(path)` functions.
+#### Functions
 
-Functions are written in parentheses. Currently there are two functions available.
+Functions are written in parentheses. Currently there are two functions available:
 
 * `(key)` returns the index that corresponds to the preceding wildcard
 * `(path)` returns the full path up to the preceding wildcard
@@ -97,7 +101,7 @@ For this reason, all wildcards for all attributes must lie on a common path. Vio
 
 For example, the paths `$.a[*]` and `$.b[*]` cannot be combined because the wildcards are not on the same path. On the other hand, `$.a` and `$.b[*].c` can be combined.
 
-Queries are analysed and compiled independent of the data to be queried
+Queries are analysed and compiled independently of the data to be queried.
 
 If you think you need to get a combination of attributes that is not allowed, think again. If you still think so just run multiple queries and do the join afterwards.
 
