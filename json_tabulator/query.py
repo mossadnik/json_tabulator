@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 
 from .expression import Expression, STAR, INDEX, PATH, is_function
+from .exceptions import IncompatiblePaths
 
 
 def nested_get(data, keys) -> tuple[Any, bool]:
@@ -32,7 +33,7 @@ class QueryPlan:
             table = expr.get_table()
 
             if not table.coincides_with(query_path):
-                raise ValueError(f'Illegal query: Paths {table} and {query_path} are not compatible.')
+                raise IncompatiblePaths(f'Illegal query: Paths {table} and {query_path} are not compatible.')
 
             query_path = max(query_path, table, key=len)
             tail = expr[len(table):]

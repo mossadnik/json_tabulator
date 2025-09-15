@@ -1,6 +1,7 @@
 import pytest
 from typing import Generator
 from json_tabulator import tabulate
+from json_tabulator.exceptions import IncompatiblePaths
 
 
 def test_raises_for_invalid_queries():
@@ -8,7 +9,7 @@ def test_raises_for_invalid_queries():
     A query is invalid if it requests attributes from tables whose
     Expressions do not all coincide.
     """
-    with pytest.raises(ValueError):
+    with pytest.raises(IncompatiblePaths):
         tabulate({
             'a_b': '$.a[*].b',
             'x_y': '$.x[*].y',
@@ -93,3 +94,15 @@ def test_query_array():
     q = tabulate({'x': '$[*].a'})
     actual = list(q.get_rows(data))
     assert actual == [{'x': 1}]
+
+
+@pytest.mark.parametrize('path, expected', [
+    ('$[1]', [{'x': None}]),
+    ('$[1][*]', [])
+])
+def test_INDEX_out_of_range(path, expected):
+    """Fixed array indices behave like dict keys."""
+    data = [[1]]
+    q = tabulate({'x': path})
+    actual = list(q.get_rows(data))
+    assert actual == expected

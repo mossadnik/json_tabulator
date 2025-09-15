@@ -1,7 +1,7 @@
 
-from .expression import Expression, STAR, INDEX, PATH
-
 from parsy import string, regex, eof, alt, seq, ParseError
+from .expression import Expression, STAR, INDEX, PATH
+from .exceptions import InvalidExpression
 
 
 dot = string('.').then(eof.should_fail('expression to continue'))
@@ -55,10 +55,6 @@ def concat_list(*args):
 
 
 expression = seq(initial_segment, inner_segment.many()).combine(concat_list)
-
-
-class InvalidExpression(ValueError):
-    pass
 
 
 def parse_expression(string: str) -> Expression:

@@ -20,8 +20,6 @@ def is_function(path: tuple):
 
 
 class Expression(tuple):
-    def __repr__(self):
-        return f'Expression({self.to_string()})'
 
     def to_string(self):
         def render_element(seg):

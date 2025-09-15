@@ -71,3 +71,8 @@ def test_Segments_are_hashable(obj):
 def test_expression_path_string(path, expected):
     actual = expression(path).to_string()
     assert actual == expected
+
+
+def test_expression_path_to_string_raises():
+    with pytest.raises(ValueError):
+        expression(1.0).to_string()
