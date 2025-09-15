@@ -35,4 +35,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-addopts = "--cov=json_tables --cov-report html"
+addopts = "--cov=json_tabulator --cov-report html"
