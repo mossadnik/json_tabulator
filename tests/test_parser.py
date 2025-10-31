@@ -1,5 +1,5 @@
 import pytest
-from json_tabulator.expression import STAR, INDEX, PATH
+from json_tabulator.expression import STAR, INDEX, PATH, Inline, expression
 from json_tabulator.parser import parse_expression, InvalidExpression
 
 
@@ -18,9 +18,11 @@ from json_tabulator.parser import parse_expression, InvalidExpression
     ['a.[1].["cd"]', ('a', 1, 'cd')],
     ['"123"', ('123',)],
     ['"123"', ('123',)],
+    ['*.b', (STAR, 'b')],
     # functions
     ['*.(index)', (STAR, INDEX)],
     ['*.(path)', (STAR, PATH)],
+    ['a.(inline [*].b)', ('a', Inline(expression(STAR, 'b')))]
 ])
 def test_accepts(s, expected):
     """
@@ -44,10 +46,11 @@ def test_accepts(s, expected):
     '(notafunction)',
     '(index)',
     '(path)',
-    '*.(index).a',
+    '*.(index).a',  # function followed by other segment
     '*.(path).a',
-    '123abc',
+    '123abc',  # unquoted key starting with number
     '123',
+    'a.(inline $[*])',  # absolute path in inline
 ])
 def test_rejects(s):
     with pytest.raises(InvalidExpression):

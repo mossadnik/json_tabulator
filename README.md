@@ -84,14 +84,24 @@ Note that in contrast to JSON path, the wildcard can be used for dicts and array
 
 #### Functions
 
-Functions are written in parentheses. Currently there are two functions available:
+Functions are notated in parentheses. All available functions can only appear at the end of a path, separated by a `.`. Example: `$.*.(path)`.
+
+##### Structural Queries
+
+There are two functions that query document structure:
 
 * `(index)` returns the index that corresponds to the preceding wildcard
 * `(path)` returns the full path up to the preceding wildcard
 
-Both functions _must_ be placed directly after a wildcard and must be at the end of the path. For example `*.(index)` is valid, but `a.(index)` and `*.(index).b` are not.
+They _must_ be placed directly after a wildcard and must be at the end of the path. For example `*.(index)` is valid, but `a.(index)` and `*.(index).b` are not.
 
 The output of `(path)` is unique for all rows extracted from the document.
+
+##### Inline Arrays
+
+The function `(inline <relative-path>)` allows to return multiple values in a single row as an inline array. The argument `<relative-path>` follows the same rules as other paths with the exception that the initial `$` is forbidden.
+
+For example, the query `$.a[*].(inline b[*].c)` finds all elements that match the path `$.a[*].b[*].c` but aggregates them into lists, one per each match of `$.a[*]`.
 
 ### Data Extraction
 

@@ -1,12 +1,12 @@
-from typing import Any
+import typing as tp
 from dataclasses import dataclass
 from collections import defaultdict
 
-from .expression import Expression, STAR, INDEX, PATH, is_function
+from .expression import Expression, STAR, INDEX, PATH, Inline, is_function
 from .exceptions import IncompatiblePaths
 
 
-def nested_get(data, keys) -> tuple[Any, bool]:
+def nested_get(data, keys) -> tuple[tp.Any, bool]:
     res = data
     for k in keys:
         if isinstance(res, dict):
@@ -38,16 +38,24 @@ class QueryPlan:
             query_path = max(query_path, table, key=len)
             tail = expr[len(table):]
             if is_function(tail):
-                steps[table][name] = tail[0]
+                func = tail[-1]
+                if isinstance(func, Inline):
+                    steps[table][name] = (*tail[:-1], InlineQueryPlan.from_expression(func.expression))
+                else:
+                    steps[table][name] = func
             else:
                 steps[table][name] = tuple(tail)
 
         return cls(path=query_path, extracts=steps)
 
     def execute(self, data, omit_missing_attributes: bool):
-        def _extract(data, item, path):
+        def _extract(data, item, path) -> tuple[tp.Any, bool]:
             if isinstance(item, tuple):
-                return nested_get(data, item)
+                if item and isinstance(item[-1], InlineQueryPlan):
+                    d, success = nested_get(data, item[:-1])
+                    return item[-1].execute(d), success
+                else:
+                    return nested_get(data, item)
             elif item == INDEX:
                 return path[-1], True
             elif item == PATH:
@@ -61,7 +69,7 @@ class QueryPlan:
                     if success or not omit_missing_attributes:
                         extract[name] = value
             if tail:
-                current, tail = tail[0], tail[1:]
+                current, *tail = tail
                 head = head + (current,)
                 if current is STAR and isinstance(data, list):
                     for idx, item in enumerate(data):
@@ -77,3 +85,16 @@ class QueryPlan:
                 yield extract
 
         yield from _recurse(data, Expression(), self.path, (), {})
+
+
+@dataclass
+class InlineQueryPlan:
+    plan: QueryPlan
+
+    @classmethod
+    def from_expression(cls, expr: Expression):
+        return cls(plan=QueryPlan.from_dict({'_': expr}))
+
+    def execute(self, data) -> list:
+        print(data)
+        return [row['_'] for row in self.plan.execute(data, omit_missing_attributes=True) if '_' in row]

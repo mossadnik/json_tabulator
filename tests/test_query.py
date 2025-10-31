@@ -106,3 +106,11 @@ def test_INDEX_out_of_range(path, expected):
     q = tabulate({'x': path})
     actual = list(q.get_rows(data))
     assert actual == expected
+
+
+def test_inline():
+    data = {'a': [{'b': 1}, {'b': 2}]}
+    q = tabulate({'x': '$.a.(inline [*].b)'})
+    actual = list(q.get_rows(data))
+    expected = [{'x': [1, 2]}]
+    assert actual == expected

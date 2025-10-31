@@ -1,5 +1,5 @@
 import pytest
-from json_tabulator.expression import expression, STAR, INDEX, PATH
+from json_tabulator.expression import expression, STAR, INDEX, PATH, Inline
 
 
 @pytest.mark.parametrize('path,expected', [
@@ -66,7 +66,8 @@ def test_Segments_are_hashable(obj):
     ['a.b.c', '$."a.b.c"'],
     [1, '$[1]'],
     [(STAR, INDEX), '$[*].(index)'],
-    [(STAR, PATH), '$[*].(path)']
+    [(STAR, PATH), '$[*].(path)'],
+    [('a', Inline(expression(STAR, 'b'))), '$.a.(inline [*].b)'],
 ])
 def test_expression_path_string(path, expected):
     actual = expression(path).to_string()
