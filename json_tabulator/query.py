@@ -71,10 +71,10 @@ class QueryPlan:
             if tail:
                 current, *tail = tail
                 head = head + (current,)
-                if current is STAR and isinstance(data, list):
+                if current == STAR and isinstance(data, list):
                     for idx, item in enumerate(data):
                         yield from _recurse(item, head, tail, path + (idx,), extract)
-                elif current is STAR and isinstance(data, dict):
+                elif current == STAR and isinstance(data, dict):
                     for idx, item in data.items():
                         yield from _recurse(item, head, tail, path + (idx,), extract)
                 elif isinstance(current, str) and isinstance(data, dict):
