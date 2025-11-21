@@ -78,13 +78,11 @@ Subscripts can be entered with or without a period, e.g. `$[*]` and `$.[*]` are 
 
 #### Wildcard `*`
 
-An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays. Use either `$[*]` or `$.*`.
-
-Note that in contrast to JSON path, the wildcard can be used for dicts and arrays regardless of whether subscript is used.
+An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays. A wildcard for dict keys can be entered like `.*` or `[*]`. For arrays only `[*]` is allowed. This is the same behavior as for JSON Path.
 
 #### Functions
 
-Functions are notated in parentheses. All available functions can only appear at the end of a path, separated by a `.`. Example: `$.*.(path)`.
+Functions are enclosed in parentheses. All available functions can only appear at the end of a path, separated by a `.`. Example: `$.*.(path)`.
 
 ##### Structural Queries
 
