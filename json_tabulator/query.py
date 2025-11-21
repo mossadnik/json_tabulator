@@ -96,5 +96,4 @@ class InlineQueryPlan:
         return cls(plan=QueryPlan.from_dict({'_': expr}))
 
     def execute(self, data) -> list:
-        print(data)
         return [row['_'] for row in self.plan.execute(data, omit_missing_attributes=True) if '_' in row]
