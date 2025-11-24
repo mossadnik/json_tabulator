@@ -57,7 +57,7 @@ class Test_reports_AttributeNotFound:
             assert isinstance(row.errors['y'], AttributeNotFound)
 
     def test_inline(self):
-        query = tabulate({'a': '$.(inline a[*])'})
+        query = tabulate({'a': '$.a.(inline [*])'})
         data = {}
         rows = list(query.get_rows(data))
         assert len(rows) == 1

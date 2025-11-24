@@ -68,4 +68,4 @@ def tabulate(
     else:
         raise ValueError(f'Query not understood: {attributes}')
     plan = QueryPlan.from_dict({a.name: a.expression for a in attributes})
-    return Tabulator(attributes, plan, omit_missing_attributes=omit_missing_attributes)
+    return Tabulator(attributes, plan)

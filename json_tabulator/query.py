@@ -63,7 +63,10 @@ class QueryPlan:
             if isinstance(item, tuple):
                 if item and isinstance(item[-1], InlineQueryPlan):
                     d, success = nested_get(data, item[:-1])
-                    return item[-1].execute(d), success
+                    if success:
+                        return item[-1].execute(d), success
+                    else:
+                        return None, success
                 else:
                     return nested_get(data, item)
             elif item == INDEX:
