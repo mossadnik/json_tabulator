@@ -1,3 +1,4 @@
+import typing as tp
 
 
 class InvalidExpression(ValueError):
@@ -10,3 +11,10 @@ class IncompatiblePaths(ValueError):
 
 class AttributeNotFound(ValueError):
     pass
+
+
+class ConversionFailed(ValueError):
+    def __init__(self, msg: str, value: tp.Any, caused_by: tp.Optional[Exception] = None):
+        super().__init__(msg)
+        self.value = value
+        self.caused_by = caused_by

@@ -33,10 +33,10 @@ def nested_get(data, keys) -> tuple[tp.Any, bool]:
 @dataclass
 class QueryPlan:
     path: Expression
-    extracts: dict[Expression, dict[str, tuple]]
+    extracts: dict[Expression, dict[tp.Hashable, tuple]]
 
     @classmethod
-    def from_dict(cls, query: dict[str, Expression]) -> 'QueryPlan':
+    def from_dict(cls, query: dict[tp.Hashable, Expression]) -> 'QueryPlan':
         steps = defaultdict(dict)
         query_path = Expression()
         for name, expr in query.items():
