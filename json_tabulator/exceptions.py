@@ -6,3 +6,7 @@ class InvalidExpression(ValueError):
 
 class IncompatiblePaths(ValueError):
     pass
+
+
+class AttributeNotFound(ValueError):
+    pass

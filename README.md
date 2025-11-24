@@ -43,7 +43,7 @@ query = tabulate({
 rows = query.get_rows(data)
 ```
 
-This returns an iterator of rows, where each row is a dict `{<column_name>: <value>}`:
+This returns an iterator of rows, where each row is of type `Row`, which is a subclass of `dict`. A row maps attribute names to values. In addition, extraction errors are reported in the attribute `Row.errors`.
 
 ```python
 >>> list(rows)
@@ -117,9 +117,8 @@ If you think you need to get a combination of attributes that is not allowed, th
 
 #### Returned values
 
-All extracted values are returned as-is with no further conversion. Returned values are not limited to atomic types, dicts and lists are also allowed.
+All extracted values are returned as-is with no further conversion. Returned values are not limited to atomic types, dicts and lists are also allowed. All requested attributes are returned, the value `None` is used if an attribute cannot be found in the data.
 
-By default, all requested attributes are returned, the value `None` is used if an attribute cannot be found in the data. When the `omit_missing_attributes` flag is set in `tabulate`, each row only contains keys that are found in the data, allowing for downstream error-handling.
 
 ## Related Projects
 

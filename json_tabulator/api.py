@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import typing as typ
 from .expression import Expression
-from .query import QueryPlan
+from .query import QueryPlan, Row
 from .parser import parse_expression
 
 
@@ -22,29 +22,26 @@ class Tabulator:
 
     Attributes:
         attributes: Output attributes.
-        omit_missing_attributes: Control handling of attributes that are not found in the data.
     """
     attributes: list[Attribute]
     _plan: QueryPlan
-    omit_missing_attributes: bool
 
     @property
     def names(self) -> list[str]:
         """Returns the names of all attributes."""
         return [a.name for a in self.attributes]
 
-    def get_rows(self, data: typ.Any) -> typ.Generator[dict[str, typ.Any], None, None]:
+    def get_rows(self, data: typ.Any) -> typ.Generator[Row, None, None]:
         """Run query against Python object.
 
         Yields:
             dict[str, typ.Any]: Row generator.
         """
-        return self._plan.execute(data, omit_missing_attributes=self.omit_missing_attributes)
+        return self._plan.execute(data)
 
 
 def tabulate(
         attributes: dict[str, str],
-        omit_missing_attributes: bool = False
 ) -> Tabulator:
     """Create a new query.
 

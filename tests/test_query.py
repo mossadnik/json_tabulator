@@ -1,7 +1,7 @@
 import pytest
 from typing import Generator
-from json_tabulator import tabulate
-from json_tabulator.exceptions import IncompatiblePaths
+from json_tabulator import tabulate, Row
+from json_tabulator.exceptions import IncompatiblePaths, AttributeNotFound
 
 
 def test_raises_for_invalid_queries():
@@ -28,30 +28,44 @@ def test_returns_row_generator_for_valid_queries():
     actual = query.get_rows(data)
     assert isinstance(actual, Generator)
     rows = list(actual)
+    assert all(isinstance(row, Row) for row in rows)
     assert rows == [
         {'a_b': 'a_b_0', 'x_y': 'x_y'},
         {'a_b': 'a_b_1', 'x_y': 'x_y'}
     ]
 
 
-def test_optionally_omits_missing_attributes():
-    query = tabulate(
-        {'a': 'a', 'b': 'b'},
-        omit_missing_attributes=True
-    )
-    data = {'b': 'b'}
-    actual = list(query.get_rows(data))
-    assert actual == [{'b': 'b'}]
+class Test_reports_AttributeNotFound:
+    def test_errors_simple(self):
+        query = tabulate({'a': '$[*].a'})
+        data = [{'a': 1}, {}]
+        rows = list(query.get_rows(data))
+        assert rows[0].errors == {}
+        actual = rows[1].errors
+        assert isinstance(actual, dict)
+        assert set(actual.keys()) == {'a'}
+        assert isinstance(actual['a'], AttributeNotFound)
 
+    def test_errors_nested(self):
+        """Check that errors are passed on when nesting."""
+        query = tabulate({'x': '$[*].a[*].x', 'y': '$[*].y'})
+        data = [{'a': [{'x': 1}, {'x': 2}]}]
+        rows = list(query.get_rows(data))
+        assert len(rows) == 2
+        for row in rows:
+            assert set(row.errors.keys()) == {'y'}
+            assert isinstance(row.errors['y'], AttributeNotFound)
 
-def test_optionally_missing_attributes_are_set_to_None():
-    query = tabulate(
-        {'a': 'a', 'b': 'b'},
-        omit_missing_attributes=False
-    )
-    data = {'b': 'b'}
-    rows = list(query.get_rows(data))
-    assert rows == [{'a': None, 'b': 'b'}]
+    def test_inline(self):
+        query = tabulate({'a': '$.(inline a[*])'})
+        data = {}
+        rows = list(query.get_rows(data))
+        assert len(rows) == 1
+        row = rows[0]
+        assert set(row.keys()) == {'a'}
+        assert row['a'] is None
+        assert set(row.errors.keys()) == {'a'}
+        assert isinstance(row.errors['a'], AttributeNotFound)
 
 
 def test_INDEX_with_array():

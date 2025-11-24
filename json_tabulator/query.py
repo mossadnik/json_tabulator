@@ -3,7 +3,17 @@ from dataclasses import dataclass
 from collections import defaultdict
 
 from .expression import Expression, STAR, INDEX, PATH, Inline, is_function
-from .exceptions import IncompatiblePaths
+from .exceptions import IncompatiblePaths, AttributeNotFound
+
+
+class Row(dict):
+    """Dict with errors."""
+    def __init__(self, data: tp.Optional[dict] = None, errors=None):
+        if data is not None:
+            super().__init__(data)
+        else:
+            super().__init__()
+        self.errors = errors or {}
 
 
 def nested_get(data, keys) -> tuple[tp.Any, bool]:
@@ -48,7 +58,7 @@ class QueryPlan:
 
         return cls(path=query_path, extracts=steps)
 
-    def execute(self, data, omit_missing_attributes: bool):
+    def execute(self, data) -> tp.Generator[Row, None, None]:
         def _extract(data, item, path) -> tuple[tp.Any, bool]:
             if isinstance(item, tuple):
                 if item and isinstance(item[-1], InlineQueryPlan):
@@ -60,14 +70,17 @@ class QueryPlan:
                 return path[-1], True
             elif item == PATH:
                 return Expression(path).to_string(), True
+            else:
+                raise TypeError(f'Invalid extraction item type: {type(item)}')
 
-        def _recurse(data, head, tail, path, extract):
+        def _recurse(data, head, tail, path, extract: Row):
             if head in self.extracts:
-                extract = dict(extract)
+                extract = Row(extract, errors=extract.errors)
                 for name, item in self.extracts[head].items():
                     value, success = _extract(data, item, path)
-                    if success or not omit_missing_attributes:
-                        extract[name] = value
+                    extract[name] = value
+                    if not success:
+                        extract.errors[name] = AttributeNotFound()
             if tail:
                 current, *tail = tail
                 head = head + (current,)
@@ -84,7 +97,7 @@ class QueryPlan:
             else:
                 yield extract
 
-        yield from _recurse(data, Expression(), self.path, (), {})
+        yield from _recurse(data, Expression(), self.path, (), Row())
 
 
 @dataclass
@@ -96,4 +109,4 @@ class InlineQueryPlan:
         return cls(plan=QueryPlan.from_dict({'_': expr}))
 
     def execute(self, data) -> list:
-        return [row['_'] for row in self.plan.execute(data, omit_missing_attributes=True) if '_' in row]
+        return [row['_'] for row in self.plan.execute(data) if '_' in row]
