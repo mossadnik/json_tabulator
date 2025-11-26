@@ -11,6 +11,8 @@ class Attribute:
     expression: Expression
     name: tp.Optional[tp.Hashable] = None
     converter: tp.Optional[tp.Callable[[tp.Any], tp.Any]] = None
+    default: tp.Optional[tp.Any] = None
+    default_factory: tp.Optional[tp.Callable[[], tp.Any]] = None
 
     @property
     def path(self):
@@ -18,8 +20,20 @@ class Attribute:
         return self.expression.to_string()
 
 
-def attribute(path: str, converter: tp.Optional[tp.Callable[[tp.Any], tp.Any]] = None):
-    return Attribute(expression=parse_expression(path), converter=converter)
+def attribute(
+        path: str,
+        converter: tp.Optional[tp.Callable[[tp.Any], tp.Any]] = None,
+        default: tp.Optional[tp.Any] = None,
+        default_factory: tp.Optional[tp.Callable[[], tp.Any]] = None
+):
+    if default is not None and default_factory is not None:
+        raise ValueError('Cannot specify both default and default_value.')
+    return Attribute(
+        expression=parse_expression(path),
+        converter=converter,
+        default=default,
+        default_factory=default_factory
+    )
 
 
 @dataclass
@@ -53,19 +67,25 @@ class Tabulator:
 def _apply_converters(row: Row, attributes: list[Attribute]) -> Row:
     errors = row.errors
 
-    def apply_converter(name, value, converter):
-        if converter is None or value is None:
+    def apply_converter(attr, value):
+        if value is None:
+            if attr.default_factory is not None:
+                return attr.default_factory()
+            else:
+                return attr.default
+        elif attr.converter is None:
             return value
-        try:
-            return converter(value)
-        except Exception as e:
-            errors[name] = ConversionFailed(
-                f'Conversion failed with unhandled exception {type(e)}',
-                value=value,
-                caused_by=e
-            )
+        else:
+            try:
+                return attr.converter(value)
+            except Exception as e:
+                errors[attr.name] = ConversionFailed(
+                    f'Conversion failed with unhandled exception {type(e)}',
+                    value=value,
+                    caused_by=e
+                )
 
-    data = {a.name: apply_converter(a.name, row[a.name], a.converter) for a in attributes}
+    data = {a.name: apply_converter(a, row[a.name]) for a in attributes}
     return Row(data=data, errors=errors)
 
 

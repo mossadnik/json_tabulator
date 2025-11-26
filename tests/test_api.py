@@ -64,3 +64,33 @@ class Test_converter:
         assert isinstance(err, ConversionFailed)
         assert err.value == 'abc'
         assert isinstance(err.caused_by, ValueError)
+
+
+class Test_default:
+    @pytest.mark.parametrize('data', [{'a': None}, {}])
+    def test_applies_default_value_if_no_value(self, data):
+        query = tabulate({'a': attribute('$.a', default=1)})
+        actual = next(query.get_rows(data))
+        assert actual['a'] == 1
+
+    def test_does_not_apply_default_if_value(self):
+        query = tabulate({'a': attribute('$.a', default=1)})
+        data = {'a': 0}
+        actual = next(query.get_rows(data))
+        assert actual['a'] == 0
+
+    @pytest.mark.parametrize('data', [{'a': None}, {}])
+    def test_applies_default_factory_if_no_value(self, data):
+        query = tabulate({'a': attribute('$.a', default_factory=lambda: 1)})
+        actual = next(query.get_rows(data))
+        assert actual['a'] == 1
+
+    def test_does_not_apply_default_factory_if_value(self):
+        query = tabulate({'a': attribute('$.a', default_factory=lambda: 1)})
+        data = {'a': 0}
+        actual = next(query.get_rows(data))
+        assert actual['a'] == 0
+
+    def test_cannot_specify_default_and_default_factory(self):
+        with pytest.raises(ValueError):
+            attribute('$.a', default=1, default_factory=lambda: 1)
