@@ -117,8 +117,58 @@ If you think you need to get a combination of attributes that is not allowed, th
 
 #### Returned values
 
-All extracted values are returned as-is with no further conversion. Returned values are not limited to atomic types, dicts and lists are also allowed. All requested attributes are returned, the value `None` is used if an attribute cannot be found in the data.
+By default, all extracted values are returned as-is with no further conversion. Returned values are not limited to atomic types, dicts and lists are also allowed.
 
+All rows contain all keys in the order that is specified in the query, regardless of whether the attribute is missing.
+
+In the query it is possible to specify processing of returned values by using the function `json_tabulator.attribute` instead of passing a path. You can configure a `converter` function and `default` value or `default_factory`. Converters are only run on values that are not missing, otherwise the default is applied. For example,
+
+```python
+from json_tabulator import tabulate, attribute
+
+query = tabulate({
+    'x': attribute('$[*].a', converter=lambda x: str(x), default='nothing')
+})
+
+data = [
+    {'a': 1},
+    {'a': None},
+    {}
+]
+[row['x'] for row in query.get_rows(data)]
+
+# output
+['1', 'nothing', 'nothing']
+```
+
+
+### Error Reporting
+
+The returned rows are of type `Row` which is a subclass of dict. It has an additional attribute `Row.errors` that is a dict mapping attributes to errors. There are two possible errors:
+
+1. If the path to an attribute does not exist, the error is `AttributeNotFound`.
+2. If a converter raises an exception the error is `ConversionFailed` with details about the source value and exception that caused the conversion to fail.
+
+Example:
+
+```python
+from json_tabulator import tabulate, attribute
+from json_tabulator.exceptions import AttributeNotFound, ConversionFailed
+
+query = tabulate({
+    'a': '$.a',
+    'b': attribute('$.b', converter=int)
+})
+data = {'b': 'not a number'}
+
+row = next(query.get_rows(data))
+
+assert isinstance(row.errors['a'], AttributeNotFound)
+assert isinstance(row.errors['b'], ConversionFailed)
+
+assert row.errors['b'].value == 'not a number'
+assert isinstance(row.errors['b'].caused_by, ValueError)
+```
 
 ## Related Projects
 

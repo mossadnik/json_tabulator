@@ -1,6 +1,7 @@
 """Test documentation examples."""
 
-from json_tabulator import tabulate
+from json_tabulator import tabulate, attribute
+from json_tabulator.exceptions import AttributeNotFound, ConversionFailed
 
 
 def test_readme_example_query():
@@ -26,3 +27,20 @@ def test_readme_example_query():
     ]
 
     assert list(rows) == expected
+
+
+def test_error_reporting_example():
+
+    query = tabulate({
+        'a': '$.a',
+        'b': attribute('$.b', converter=int)
+    })
+    data = {'b': 'not a number'}
+
+    row = next(query.get_rows(data))
+
+    assert isinstance(row.errors['a'], AttributeNotFound)
+    assert isinstance(row.errors['b'], ConversionFailed)
+
+    assert row.errors['b'].value == 'not a number'
+    assert isinstance(row.errors['b'].caused_by, ValueError)
