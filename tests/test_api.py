@@ -10,7 +10,7 @@ class Test_tabulate_api:
 
     def test_fails_if_not_dict(self):
         with pytest.raises(ValueError):
-            tabulate('$.*')
+            tabulate('$.*')  # type: ignore
 
     def test_accepts_dict_of_path_or_attribute(self):
         query = tabulate({'a': '$.a', 'b': attribute('$.b', converter=int)})
