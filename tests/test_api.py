@@ -23,6 +23,18 @@ class Test_tabulate_api:
         assert b.converter is int
 
 
+@pytest.mark.parametrize('a, b', [
+    ('$.a', '$.b[*].c'),
+    ('$.b[*].c', '$.a')
+])
+def test_returned_row_keys_are_sorted(a, b):
+    """Key order does not depend on the order in which attributes are extracted"""
+    query = tabulate({'b': a, 'a': b})
+    data = {'a': 'a', 'b': [{'c': 'b1'}, {'c': 'b2'}]}
+    for row in query.get_rows(data):
+        assert tuple(row.keys()) == ('b', 'a')
+
+
 class Test_Attribute:
     def test_path(self):
         query = tabulate({'a': '$.a[*].b'})
