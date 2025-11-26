@@ -103,6 +103,6 @@ def tabulate(
             for name, attr in attributes.items()
         ]
     else:
-        raise ValueError(f'Query not understood: {attributes}')
+        raise TypeError(f'Query not understood: {attributes}')
     plan = QueryPlan.from_dict({a.name: a.expression for a in parsed_attributes})
     return Tabulator(parsed_attributes, plan)

@@ -9,7 +9,7 @@ class Test_tabulate_api:
         assert query.names == ['a', 'b']
 
     def test_fails_if_not_dict(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             tabulate('$.*')  # type: ignore
 
     def test_accepts_dict_of_path_or_attribute(self):
