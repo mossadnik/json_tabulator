@@ -55,30 +55,28 @@ This returns an iterator of rows, where each row is of type `Row`, which is a su
 
 ### Path Syntax
 
-The syntax for path expressions is very similar to a subset of JSON Path. A path consists of an optional root element `'$'` followed by a path that specifies what is to be extracted. The child operator `.` and subscripts `[1], ['a'], [*]` can be used for arrays or dicts.
+The syntax for path expressions is very similar to a subset of JSON Path. A path consists of an optional root element `'$'` followed by a path that specifies what is to be extracted. The child operator `.` and segments like `.my_key`, `."my_key"`, `.*` are used for dict keys, while subscripts like `[1]`, `[*]` can be used for arrays.
 
-#### Dict key
+#### Dict Keys
 
 Can be any string. Key values can be quoted with single or double quotes. Within quoted strings, the quote character must be doubled to escape it. For example, `"say \"hello\""` is interpreted as `say "hello"`.
 
 Keys _must_ be quoted if
 * they contain any of the characters `* $ . ' " [] ()`, or if
 * they start with a digit
-* they are used in a subscript, e.g. `$["child"]` is valid, but `$[child]` is not.
 
-#### Subscripts
+#### Array Subscripts
 
 Subscripts are entered as `[]`. Allowed subscript values are
 
 * Non-negative numbers representing array indices, e.g. `$[123]`
-* Quoted dict keys, e.g. `$['a']`
 * Wildcards, e.g. `$[*]`
 
 Subscripts can be entered with or without a period, e.g. `$[*]` and `$.[*]` are both valid.
 
 #### Wildcard `*`
 
-An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays. A wildcard for dict keys can be entered like `.*` or `[*]`. For arrays only `[*]` is allowed. This is the same behavior as for JSON Path.
+An asterisk `*` is interpreted as a wildcard. Iterates over dict values or array items. Note that wildcards _must_ be entered explicitly, there is no implicit iteration over arrays. A wildcard for dict keys is entered like `.*`. For arrays only `[*]` is allowed. Note that this is more restrictive than json path.
 
 #### Functions
 
