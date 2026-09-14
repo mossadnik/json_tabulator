@@ -8,7 +8,12 @@ class Segment:
 
 
 @dataclass(frozen=True)
-class Star(Segment):
+class IndexStar(Segment):
+    pass
+
+
+@dataclass(frozen=True)
+class KeyStar(Segment):
     pass
 
 
@@ -32,7 +37,8 @@ class Inline(Segment):
         return 'inline'
 
 
-STAR = Star()
+INDEX_STAR = IndexStar()
+KEY_STAR = KeyStar()
 INDEX = Index()
 PATH = Path()
 
@@ -47,8 +53,10 @@ def is_function(path: tuple):
 class Expression(tuple):
     def to_string(self, absolute: bool=True) -> str:
         def render_element(seg):
-            if seg is STAR:
+            if seg is INDEX_STAR:
                 return '[*]'
+            elif seg is KEY_STAR:
+                return '.*'
             elif isinstance(seg, (Path, Index)):
                 return '.' + f'({seg.name()})'
             elif isinstance(seg, Inline):
@@ -71,7 +79,7 @@ class Expression(tuple):
     def get_table(self) -> 'Expression':
         idx = -1
         for i, seg in enumerate(self):
-            if seg is STAR:
+            if seg in (INDEX_STAR, KEY_STAR):
                 idx = i
         return Expression(self[:idx + 1])
 
@@ -79,7 +87,7 @@ class Expression(tuple):
         return all(a == b for a, b in zip(self, other))
 
     def is_concrete(self) -> bool:
-        return not any(seg is STAR for seg in self)
+        return not any(seg in (INDEX_STAR, KEY_STAR) for seg in self)
 
     def __add__(self, other: 'Expression') -> 'Expression':
         return Expression(super().__add__(other))

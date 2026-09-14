@@ -1,28 +1,26 @@
 import pytest
-from json_tabulator.expression import STAR, INDEX, PATH, Inline, expression
+from json_tabulator.expression import INDEX_STAR, KEY_STAR, INDEX, PATH, Inline, expression
 from json_tabulator.parser import parse_expression, InvalidExpression
 
 
 @pytest.mark.parametrize('s, expected', [
     ['a', ('a',)],
     ['a.b', ('a', 'b')],
-    ['a.*', ('a', STAR)],
-    ['a[*]', ('a', STAR)],
-    ['a.[*]', ('a', STAR)],
-    ['*', (STAR,)],
+    ['a.*', ('a', KEY_STAR)],
+    ['a[*]', ('a', INDEX_STAR)],
+    ['a.[*]', ('a', INDEX_STAR)],
+    ['*', (KEY_STAR,)],
     ['"\\"a\\""', ('"a"',)],
     ["'\\'a\\''", ("'a'",)],
-    ['a["123"]', ('a', '123')],
-    ["a['123']", ('a', '123')],
-    ['a[1]["cd"]', ('a', 1, 'cd')],
-    ['a.[1].["cd"]', ('a', 1, 'cd')],
+    ['a[1][2]', ('a', 1, 2)],
+    ['a.[1].[2]', ('a', 1, 2)],
     ['"123"', ('123',)],
     ['"123"', ('123',)],
-    ['*.b', (STAR, 'b')],
+    ['*.b', (KEY_STAR, 'b')],
     # functions
-    ['*.(index)', (STAR, INDEX)],
-    ['*.(path)', (STAR, PATH)],
-    ['a.(inline [*].b)', ('a', Inline(expression(STAR, 'b')))]
+    ['*.(index)', (KEY_STAR, INDEX)],
+    ['*.(path)', (KEY_STAR, PATH)],
+    ['a.(inline [*].b)', ('a', Inline(expression(INDEX_STAR, 'b')))]
 ])
 def test_accepts(s, expected):
     """
@@ -51,6 +49,8 @@ def test_accepts(s, expected):
     '123abc',  # unquoted key starting with number
     '123',
     'a.(inline $[*])',  # absolute path in inline
+    'a["123"]',  # don't allow dict keys in square brackets
+    "a['123']",
 ])
 def test_rejects(s):
     with pytest.raises(InvalidExpression):

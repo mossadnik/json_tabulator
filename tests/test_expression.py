@@ -1,12 +1,12 @@
 import pytest
-from json_tabulator.expression import expression, STAR, INDEX, PATH, Inline
+from json_tabulator.expression import expression, INDEX_STAR, INDEX, PATH, Inline
 
 
 @pytest.mark.parametrize('path,expected', [
     [('a', 'b'), True],
-    [('a', STAR, 'b'), False],
+    [('a', INDEX_STAR, 'b'), False],
     [('a', 0, 'b'), True],
-    [('a', 0, 'b', STAR), False]
+    [('a', 0, 'b', INDEX_STAR), False]
 ])
 def test_is_concrete(path: tuple, expected: bool):
     """
@@ -20,7 +20,7 @@ def test_is_concrete(path: tuple, expected: bool):
     [('a', 'b'), ('a', 'b'), True],
     [('a',), ('a', 'b'), True],
     [('a', 'b'), ('a', ('c')), False],
-    [('a', STAR, 'b'), ('a', STAR), True],
+    [('a', INDEX_STAR, 'b'), ('a', INDEX_STAR), True],
     [('a', 0, 'b'), ('a', 0), True],
     [('a', 0, 'b'), ('a', 1), False]
 ])
@@ -35,9 +35,9 @@ def test_coincides_with(this: tuple, other: tuple, expected: bool):
 
 
 @pytest.mark.parametrize('path, expected', [
-    [('a', STAR, 'b'), ('a', STAR)],
+    [('a', INDEX_STAR, 'b'), ('a', INDEX_STAR)],
     [('a', 'b'), ()],
-    [('a', STAR, INDEX), ('a', STAR)],
+    [('a', INDEX_STAR, INDEX), ('a', INDEX_STAR)],
     [('a', 1), ()],
 ])
 def test_get_table(path: tuple, expected: tuple):
@@ -51,23 +51,23 @@ def test_get_table(path: tuple, expected: tuple):
 
 
 
-@pytest.mark.parametrize('obj', [STAR])
+@pytest.mark.parametrize('obj', [INDEX_STAR])
 def test_Segments_are_hashable(obj):
     hash(obj)  # does not raise
 
 
 @pytest.mark.parametrize('path, expected', [
     [(), '$'],
-    [('a', STAR), '$.a[*]'],
+    [('a', INDEX_STAR), '$.a[*]'],
     ['*', '$."*"'],
     [('a', '*'), '$.a."*"'],
     ['123', '$."123"'],
     ['.', '$."."'],
     ['a.b.c', '$."a.b.c"'],
     [1, '$[1]'],
-    [(STAR, INDEX), '$[*].(index)'],
-    [(STAR, PATH), '$[*].(path)'],
-    [('a', Inline(expression(STAR, 'b'))), '$.a.(inline [*].b)'],
+    [(INDEX_STAR, INDEX), '$[*].(index)'],
+    [(INDEX_STAR, PATH), '$[*].(path)'],
+    [('a', Inline(expression(INDEX_STAR, 'b'))), '$.a.(inline [*].b)'],
 ])
 def test_expression_path_string(path, expected):
     actual = expression(path).to_string()

@@ -2,7 +2,7 @@ import typing as tp
 from dataclasses import dataclass
 from collections import defaultdict
 
-from .expression import Expression, STAR, INDEX, PATH, Inline, is_function
+from .expression import Expression, INDEX_STAR, KEY_STAR, INDEX, PATH, Inline, is_function
 from .exceptions import IncompatiblePaths, AttributeNotFound
 
 
@@ -87,10 +87,10 @@ class QueryPlan:
             if tail:
                 current, *tail = tail
                 head = head + (current,)
-                if current == STAR and isinstance(data, list):
+                if current == INDEX_STAR and isinstance(data, list):
                     for idx, item in enumerate(data):
                         yield from _recurse(item, head, tail, path + (idx,), extract)
-                elif current == STAR and isinstance(data, dict):
+                elif current == KEY_STAR and isinstance(data, dict):
                     for idx, item in data.items():
                         yield from _recurse(item, head, tail, path + (idx,), extract)
                 elif isinstance(current, str) and isinstance(data, dict):

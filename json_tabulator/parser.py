@@ -1,11 +1,12 @@
 
 from parsy import string, regex, eof, alt, seq, forward_declaration, ParseError
-from .expression import Expression, STAR, INDEX, PATH, Inline
+from .expression import Expression, INDEX_STAR, KEY_STAR, INDEX, PATH, Inline
 from .exceptions import InvalidExpression
 
 
 dot = string('.').then(eof.should_fail('expression to continue'))
-star = string('*').result(STAR)
+index_star = string('*').result(INDEX_STAR)
+key_star = string('*').result(KEY_STAR)
 root = string('$').result([])
 forbidden = ''.join(['"', "'", '\\.', '\\$', '\\*', '\\[\\]', '\\(\\)'])
 lparen = string('(')
@@ -29,20 +30,20 @@ relative_expression = forward_declaration()
 func_inline = lparen >> string('inline') >> whitespace >> relative_expression.map(lambda x: Inline(Expression(x))) << rparen
 function = alt(func_index, func_path, func_inline)
 
-subscript = lbracket >> alt(number, quoted_member, star) << rbracket
+subscript = lbracket >> alt(number, index_star) << rbracket
 
 relative_initial_segment = alt(
     unquoted_member,
     quoted_member,
     subscript,
-    star,
+    key_star,
 )
 initial_segment = alt(root, relative_initial_segment)
 
 inner_segment = alt(
     dot >> unquoted_member,
     dot >> quoted_member,
-    dot >> star,
+    dot >> key_star,
     dot >> function,
     dot.optional() >> subscript
 )
@@ -69,10 +70,11 @@ def parse_expression(string: str) -> Expression:
         raise InvalidExpression(string)
 
     for i, part in enumerate(res):
+        # check function positioning
         if part in (PATH, INDEX):
             if i < len(res) - 1:
                 raise InvalidExpression(string)
-            if i == 0 or res[i - 1] != STAR:
+            if i == 0 or res[i - 1] not in (INDEX_STAR, KEY_STAR):
                 raise InvalidExpression(string)
         elif isinstance(part, Inline):
             if i < len(res) - 1:
