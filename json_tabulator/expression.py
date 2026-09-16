@@ -77,20 +77,27 @@ class Expression(tuple):
         return self.to_string()
 
     def get_table(self) -> 'Expression':
-        idx = -1
+        """Return sub-expression up to last wildcard."""
+        idx = 0
         for i, seg in enumerate(self):
             if seg in (INDEX_STAR, KEY_STAR):
-                idx = i
-        return Expression(self[:idx + 1])
+                idx = i + 1
+        return Expression(self[:idx])
 
     def coincides_with(self, other: 'Expression') -> bool:
+        """Two expressions coincide if one is a prefix of the other."""
         return all(a == b for a, b in zip(self, other))
 
-    def is_concrete(self) -> bool:
-        return not any(seg in (INDEX_STAR, KEY_STAR) for seg in self)
+    def has_wildcards(self) -> bool:
+        """Check whether expression contains any wildcards."""
+        return any(seg in (INDEX_STAR, KEY_STAR) for seg in self)
 
     def __add__(self, other: 'Expression') -> 'Expression':
         return Expression(super().__add__(other))
+
+    def get_selector(self) -> 'Expression':
+        """Return expression with all array indices replaced with wildcards."""
+        return Expression([INDEX_STAR if isinstance(seg, int) else seg for seg in self])
 
 
 def expression(*args) -> Expression:

@@ -168,6 +168,43 @@ assert row.errors['b'].value == 'not a number'
 assert isinstance(row.errors['b'].caused_by, ValueError)
 ```
 
+### Getting path expressions from data
+
+The easiest way to get the available paths is to list them for existing documents. The function `json_tabulator.analyze` allows to do this conveniently. Here is a usage example for the data example from before:
+
+```python
+from json_tabulator import analyze
+
+
+# same data as before
+data = {
+    'id': 'doc-1',
+    'table': [
+        {'id': 1, 'name': 'row-1'},
+        {'id': 2, 'name': 'row-2'}
+    ]
+}
+
+expressions = [
+    {
+        'expression': expr.to_string(),  # path to value
+        'selector': expr.get_selector().to_string(),  # path with array indices replaced with wildcard
+        'value': val  # value
+    }
+    for expr, val in analyze(data)
+]
+
+# returns
+# [
+#     {'expression': '$.id', 'selector': '$.id', 'value': 'doc-1'},
+#     {'expression': '$.table[0].id', 'selector': '$.table[*].id', 'value': 1},
+#     {'expression': '$.table[0].name', 'selector': '$.table[*].name', 'value': 'row-1'},
+#     {'expression': '$.table[1].id','selector': '$.table[*].id', 'value': 2},
+#     {'expression': '$.table[1].name', 'selector': '$.table[*].name', 'value': 'row-2'},
+# ]
+```
+
+
 ## Related Projects
 
 - [jsontable](https://pypi.org/project/jsontable/) has the same purpose but is not maintained.

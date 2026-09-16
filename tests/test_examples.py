@@ -1,6 +1,6 @@
 """Test documentation examples."""
 
-from json_tabulator import tabulate, attribute
+from json_tabulator import tabulate, attribute, analyze
 from json_tabulator.exceptions import AttributeNotFound, ConversionFailed
 
 
@@ -44,3 +44,28 @@ def test_error_reporting_example():
 
     assert row.errors['b'].value == 'not a number'
     assert isinstance(row.errors['b'].caused_by, ValueError)
+
+
+def test_analyze_example():
+    data = {
+        'id': 'doc-1',
+        'table': [
+            {'id': 1, 'name': 'row-1'},
+            {'id': 2, 'name': 'row-2'}
+        ]
+    }
+    expressions = [
+        {
+            'selector': expr.get_selector().to_string(),
+            'expression': expr.to_string(),
+            'value': val
+        }
+        for expr, val in analyze(data)
+    ]
+    assert expressions == [
+        {'expression': '$.id', 'selector': '$.id', 'value': 'doc-1'},
+        {'expression': '$.table[0].id', 'selector': '$.table[*].id', 'value': 1},
+        {'expression': '$.table[0].name', 'selector': '$.table[*].name', 'value': 'row-1'},
+        {'expression': '$.table[1].id','selector': '$.table[*].id', 'value': 2},
+        {'expression': '$.table[1].name', 'selector': '$.table[*].name', 'value': 'row-2'},
+    ]

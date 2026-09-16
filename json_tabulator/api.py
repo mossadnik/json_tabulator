@@ -126,3 +126,21 @@ def tabulate(
         raise TypeError(f'Query not understood: {attributes}')
     plan = QueryPlan.from_dict({a.name: a.expression for a in parsed_attributes})
     return Tabulator(parsed_attributes, plan)
+
+
+def analyze(data: dict | list | str | int) -> tp.Generator[tuple[Expression, tp.Any], None, None]:
+    """Convert a JSON-compatible data structure into path-expression / value tuples.
+
+    This function can be used to get expressions for use in `tabulate` from existing documents.
+    """
+    def _analyze(data, expr: tuple):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                yield from _analyze(v, expr + (k,))
+        elif isinstance(data, list):
+            for i, v in enumerate(data):
+                yield from _analyze(v, expr + (i,))
+        else:
+            yield expr, data
+
+    yield from ((Expression(expr), val) for expr, val in _analyze(data, ()))

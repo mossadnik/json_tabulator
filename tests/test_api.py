@@ -1,6 +1,7 @@
 import pytest
-from json_tabulator import tabulate, attribute
+from json_tabulator import tabulate, attribute, analyze
 from json_tabulator.exceptions import ConversionFailed
+from json_tabulator.expression import Expression
 
 
 class Test_tabulate_api:
@@ -106,3 +107,28 @@ class Test_default:
     def test_cannot_specify_default_and_default_factory(self):
         with pytest.raises(ValueError):
             attribute('$.a', default=1, default_factory=lambda: 1)
+
+
+class Test_analyze:
+    @pytest.mark.parametrize('data', [[], {}])
+    def test_returns_empty_generator_if_input_empty(self, data):
+        with pytest.raises(StopIteration):
+            next(analyze(data))
+
+    def test_dict_key(self):
+        data = {'a': 1}
+        res = list(analyze(data))
+        assert len(res) == 1
+        expr, val = res[0]
+        assert isinstance(expr, Expression)
+        assert expr.to_string() == '$.a'
+        assert val == 1
+
+    def test_array_index(self):
+        data = [1]
+        res = list(analyze(data))
+        assert len(res) == 1
+        expr, val = res[0]
+        assert isinstance(expr, Expression)
+        assert expr.to_string() == '$[0]'
+        assert val == 1

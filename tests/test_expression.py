@@ -1,19 +1,21 @@
 import pytest
-from json_tabulator.expression import expression, INDEX_STAR, INDEX, PATH, Inline
+from json_tabulator.expression import expression, INDEX_STAR, KEY_STAR, INDEX, PATH, Inline
 
 
-@pytest.mark.parametrize('path,expected', [
-    [('a', 'b'), True],
-    [('a', INDEX_STAR, 'b'), False],
-    [('a', 0, 'b'), True],
-    [('a', 0, 'b', INDEX_STAR), False]
+@pytest.mark.parametrize('expr,expected', [
+    [('a', 'b'), False],
+    [('a', INDEX_STAR, 'b'), True],
+    [('a', KEY_STAR, 'b'), True],
+    [('a', 0, 'b'), False],
+    [('a', 0, 'b', INDEX_STAR), True],
+    [('a', 0, 'b', KEY_STAR), True],
 ])
-def test_is_concrete(path: tuple, expected: bool):
+def test_has_wildcards(expr: tuple, expected: bool):
     """
     - A path is concrete if it does not contain the wildcard STAR.
     """
-    path = expression(path)
-    assert path.is_concrete() == expected
+    expr = expression(expr)
+    assert expr.has_wildcards() == expected
 
 
 @pytest.mark.parametrize('this, other, expected', [
@@ -59,6 +61,7 @@ def test_Segments_are_hashable(obj):
 @pytest.mark.parametrize('path, expected', [
     [(), '$'],
     [('a', INDEX_STAR), '$.a[*]'],
+    [('a', KEY_STAR), '$.a.*'],
     ['*', '$."*"'],
     [('a', '*'), '$.a."*"'],
     ['123', '$."123"'],
@@ -77,3 +80,14 @@ def test_expression_path_string(path, expected):
 def test_expression_path_to_string_raises():
     with pytest.raises(ValueError):
         expression(1.0).to_string()
+
+
+@pytest.mark.parametrize('expr, expected', [
+    [('a', 1, 'b'), ('a', INDEX_STAR, 'b')],
+    [('a', 'b'), ('a', 'b')],
+    [(1, KEY_STAR), (INDEX_STAR, KEY_STAR)]
+])
+def test_get_selector(expr, expected):
+    actual = expression(expr).get_selector()
+    expected = expression(expected)
+    assert actual == expected
